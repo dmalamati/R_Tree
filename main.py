@@ -1,18 +1,15 @@
 import xml.etree.ElementTree as ET
 import csv
 import pandas as pd
-import pickle
-import os
 
 input_file = "map.osm"
 output_file = "datafile.csv"
 block_size = 32 * 1024  # 32KB in bytes
 
 
-# Function to calculate the size of a CSV row
-def calculate_entry_size(node_data):
-    # Calculate the size of the CSV row by converting it to a string and getting its length in bytes
-    csv_row = ",".join(node_data)
+# Function to calculate the size of a CSV row, including block_id
+def calculate_entry_size(block_id, node_data):
+    csv_row = f"{block_id}," + ",".join(node_data)
     return len(csv_row.encode("utf-8"))
 
 
@@ -32,13 +29,8 @@ for element in root:
         tags = {tag.attrib["k"]: tag.attrib["v"] for tag in element.findall("tag")}
         name = tags.get("name", "unknown")  # Get the "name" tag value or use "unknown" if it doesn't exist
 
-
         # Add node data to the list
         node_data.append([node_id, latitude, longitude, name])
-
-# Find the maximum entry size
-max_entry_size = max(calculate_entry_size(entry) for entry in node_data)
-
 
 # Function to write data to blocks
 def write_data_to_blocks(node_data, block_size):
@@ -48,7 +40,7 @@ def write_data_to_blocks(node_data, block_size):
     blocks_data = []
 
     for entry in node_data:
-        entry_size = calculate_entry_size(entry)
+        entry_size = calculate_entry_size(current_block_id, entry)
 
         if current_block_size + entry_size <= block_size:
             current_block_data.append(entry)
@@ -73,22 +65,28 @@ with open(output_file, "w", newline="", encoding="utf-8") as csv_file:
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(["block_id", "id", "lat", "lon", "name"])
 
-    # Write metadata in the first block
-    csv_writer.writerow([0, len(blocks_data), len(node_data), max_entry_size])
+    # Write metadata in block0
+    csv_writer.writerow([0, len(node_data), len(blocks_data), block_size])
 
     # Write data for each block starting from block_id = 1
     for block_id, block_data in blocks_data:
         for entry in block_data:
             csv_writer.writerow([block_id] + entry)
 
-data = pd.read_csv("datafile.csv")
+
+# Step 3: Print all the columns
+data = pd.read_csv(output_file)
+
+# Optional: Set some display options to see all the columns and rows
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_rows', None)
 
-
-# Step 3: Print all the columns
+# Print the DataFrame
 print(data)
+
+
+
 
 
 
