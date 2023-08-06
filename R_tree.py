@@ -22,7 +22,20 @@ def read_block_data(csv_reader, block_id):
     return block_data
 
 
+def choose_subtree(tree, level):
+    pass
+    # return leaf_node -> index of node in the list
+
+
+def overflow_treatment(level_of_n):  #  can be inside of insert_one_by_one
+    pass
+
 # Read data from the CSV file
+def insert_one_by_one(tree, num_of_dimensions):
+    pass
+    # return full tree
+
+
 with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     csv_reader = csv.reader(csv_file)
 
@@ -54,6 +67,11 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         for record in block_data:
             print(record)
             print("\n")
+
+    num_of_dimensions = 2
+    max_entries = 3
+    tree = []
+    tree = insert_one_by_one(tree, num_of_dimensions)
 
 # Process and print the blocks outside the loop
 # for block_id, block_data in enumerate(blocks, start=1):

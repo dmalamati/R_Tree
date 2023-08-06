@@ -32,6 +32,7 @@ for element in root:
         # Add node data to the list
         node_data.append([node_id, latitude, longitude, name])
 
+
 # Function to write data to blocks
 def write_data_to_blocks(node_data, block_size):
     current_block_id = 1
@@ -89,6 +90,9 @@ print(data)
 
 
 
-
-
+#   Node = []
+#   d dimentions
+#   n entries per node
+#
+# tree =[ [<mbr,index> , , , ] -> [<point,record_id> , , ] -> [] [] ]
 

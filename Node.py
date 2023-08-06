@@ -1,0 +1,44 @@
+import math
+
+
+class Node:
+    max_entries = 3  # M
+    min_entries = math.floor(max_entries/2)  # m
+
+    def __init__(self, entries=None, parent=None):
+        if entries is None:
+            self.entries = []  # List of entries (internal or leaf)
+            self.num_of_entries = 0
+        else:
+            self.entries = entries
+            self.num_of_entries = len(entries)
+        if parent is None:
+            self.parent = None  # Reference to the parent node
+        else:
+            self.parent = parent
+
+    def insert_entry(self, entry):
+        pass
+
+    def delete_entry(self, entry):
+        pass
+
+    @classmethod
+    def set_max_entries(cls, number):
+        cls.max_entries = number
+        cls.min_entries = math.floor(number/2)
+
+
+class InternalNode(Node):
+    def __init__(self, entries=None, parent=None):
+        super().__init__(entries=None, parent=None)
+
+
+class LeafNode(Node):
+    def __init__(self, entries=None, parent=None):
+        super().__init__(entries=None, parent=None)
+
+
+entr = [[1, 2, 3], [4, 5, 6]]
+node1 = Node(entr)
+print(node1.entries[1])
