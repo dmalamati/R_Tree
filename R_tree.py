@@ -8,16 +8,19 @@ input_file = "datafile.csv"
 def read_block_data(csv_reader, block_id):
     block_data = []
 
+    slot = 0  # Initialize slot for each block
     for row in csv_reader:
         row_block_id = int(row[0])
         if row_block_id == block_id:
-            # block_data.append(row[1:])  # Exclude the block_id from the data
-            block_data.append(row)
+            block_data.append([block_id, slot, row[2], row[3]])  # Include block_id, slot, lat, lon
+            slot += 1  # Increment slot for each record in the block
         elif row_block_id > block_id:
             break  # Stop reading when the next block is reached
 
     return block_data
 
+
+# main ------------------------------------------------------------------------------
 
 # Read data from the CSV file
 with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
@@ -26,10 +29,10 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     # Skip the header row
     next(csv_reader)
 
-    # Read and store the metadata from the second row aka first block
+    # Read and store the metadata from the second row
     metadata = next(csv_reader)
 
-    # Save the metadata
+    # Parse metadata
     total_entries = int(metadata[1])
     total_blocks = int(metadata[2])
     block_size = int(metadata[3])
@@ -43,7 +46,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         block_data = read_block_data(csv_reader, block_id)
 
         # Create a DataFrame for the block data
-        columns = ["block_id", "id", "lat", "lon", "name"]
+        columns = ["block_id", "slot", "lat", "lon"]
         df = pd.DataFrame(block_data, columns=columns)
 
         print(f"Block {block_id}:")
@@ -51,3 +54,5 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         # print(block_data)
 
         print("\n")  # Separate blocks with an empty line
+
+
