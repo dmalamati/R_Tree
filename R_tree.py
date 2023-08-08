@@ -1,4 +1,6 @@
 import csv
+from Entry import Entry, LeafEntry
+from Node import Node
 import pandas as pd
 
 input_file = "datafile.csv"
@@ -23,6 +25,9 @@ def read_block_data(csv_reader, block_id):
 
 
 def choose_subtree(tree, level):
+    N = tree[0]
+    if N.is_leaf:
+        return N
     pass
     # return leaf_node -> index of node in the list
 
@@ -30,9 +35,24 @@ def choose_subtree(tree, level):
 def overflow_treatment(level_of_n):  #  can be inside of insert_one_by_one
     pass
 
+
 # Read data from the CSV file
-def insert_one_by_one(tree, num_of_dimensions):
-    pass
+def insert_one_by_one(max_entries, num_of_dimensions, blocks):
+    tree = []
+    leaf_level = 0
+    root = Node()
+    tree.append(root)
+    Node.set_max_entries(max_entries)
+    for block in blocks:
+        for record in block:
+            new_entry = LeafEntry(record)
+            N = choose_subtree(tree, leaf_level)
+            if len(N.entries) < Node.max_entries:
+                N.insert_entry(new_entry)
+            elif len(N.entries) == Node.max_entries:
+                return tree
+
+    return tree
     # return full tree
 
 
@@ -63,15 +83,20 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         blocks.append(block_data)
 
     # print(blocks)
-    for block_data in blocks:
-        for record in block_data:
-            print(record)
-            print("\n")
+    # for block_data in blocks:
+    #     for record in block_data:
+    #         print(record)
+    #         print("\n")
 
     num_of_dimensions = 2
-    max_entries = 3
-    tree = []
-    tree = insert_one_by_one(tree, num_of_dimensions)
+    max_entries = 4
+    tree = insert_one_by_one(max_entries, num_of_dimensions, blocks)
+    print(Node.max_entries)
+    for node in tree:
+        print(len(node.entries))
+        for leaf_entry in node.entries:
+            print(leaf_entry.record_id)
+            print(leaf_entry.point)
 
 # Process and print the blocks outside the loop
 # for block_id, block_data in enumerate(blocks, start=1):

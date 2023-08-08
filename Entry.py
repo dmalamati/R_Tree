@@ -4,11 +4,17 @@ class Entry:
         self.rectangle = rectangle
         self.child_node = child_node
 
+#
+# class LeafEntry:
+#     def __init__(self, point, record_id):
+#         self.point = point
+#         self.record_id = record_id
+
 
 class LeafEntry:
-    def __init__(self, point, record_id):
-        self.point = point
-        self.record_id = record_id
+    def __init__(self, record):
+        self.record_id = (record[0], record[1])
+        self.point = record[2:]
 
 
 class Point:
@@ -54,4 +60,7 @@ class Rectangle:
 # print("Bottom Left:", rectangle_2d.bottom_left_point.coordinates)
 # print("Top Right:", rectangle_2d.top_right_point.coordinates)
 
-
+# entry = [1, 0, 41.5163899, 26.5291294, 44.23, 56.322]
+# new = LeafEntry(entry)
+# print(new.point)
+# print(new.record_id)
