@@ -6,15 +6,17 @@ class Node:
     max_entries = 3  # M
     min_entries = math.floor(max_entries/2)  # m
 
-    def __init__(self, entries=None, parent=None):
+    def __init__(self, entries=None, parent=None, slot_in_parent=None):
         if entries is None:
             self.entries = []  # List of entries (internal or leaf)
         else:
             self.entries = entries
         if parent is None:
             self.parent = None  # Reference to the parent node
+            self.slot_in_parent = None
         else:
             self.parent = parent
+            self.slot_in_parent = slot_in_parent
 
     def insert_entry(self, entry):
         self.entries.append(entry)
@@ -26,8 +28,9 @@ class Node:
     def delete_entry(self, entry):
         pass
 
-    def set_parent(self, parent):
+    def set_parent(self, parent, slot_in_parent):
         self.parent = parent
+        self.slot_in_parent = slot_in_parent
 
     @classmethod
     def set_max_entries(cls, number):
