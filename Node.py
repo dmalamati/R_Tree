@@ -21,6 +21,11 @@ class Node:
     def insert_entry(self, entry):
         self.entries.append(entry)
 
+    def is_leaf(self):
+        if not self.entries:
+            return False
+        return isinstance(self.entries[0], LeafEntry)
+
     def insert_entries(self, entries):
         for entry in entries:
             self.entries.append(entry)
