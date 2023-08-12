@@ -9,15 +9,8 @@ class Node:
     def __init__(self, entries=None, parent=None):
         if entries is None:
             self.entries = []  # List of entries (internal or leaf)
-            self.num_of_entries = 0
-            self.is_leaf = True
         else:
             self.entries = entries
-            self.num_of_entries = len(entries)
-            if isinstance(entries[0], Entry):
-                self.is_leaf = False
-            else:
-                self.is_leaf = True
         if parent is None:
             self.parent = None  # Reference to the parent node
         else:
@@ -25,10 +18,16 @@ class Node:
 
     def insert_entry(self, entry):
         self.entries.append(entry)
-        self.num_of_entries += 1
+
+    def insert_entries(self, entries):
+        for entry in entries:
+            self.entries.append(entry)
 
     def delete_entry(self, entry):
         pass
+
+    def set_parent(self, parent):
+        self.parent = parent
 
     @classmethod
     def set_max_entries(cls, number):
