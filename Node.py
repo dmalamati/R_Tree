@@ -18,6 +18,12 @@ class Node:
             self.parent = parent
             self.slot_in_parent = slot_in_parent
 
+   # def __str__(self):
+        #if hasattr(self, 'mbr'):
+            #return f"Node with MBR: {self.mbr}"
+        #else:
+            #return f"Node with {len(self.entries)} entries"
+
     def insert_entry(self, entry):
         self.entries.append(entry)
 

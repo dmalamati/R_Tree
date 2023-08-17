@@ -76,6 +76,9 @@ class Rectangle:
 
         return overlap_enlargement
 
+    #def __str__(self):
+        #return f"[[{self.bottom_left_point.coordinates[0]}, {self.bottom_left_point.coordinates[1]}], [{self.top_right_point.coordinates[0]}, {self.top_right_point.coordinates[1]}]]"
+
     def calculate_area_enlargement(self, new_leaf_entry):
         # Create a new rectangle using the existing corners and the new_leaf_entry's point
         new_rectangle_points = [
