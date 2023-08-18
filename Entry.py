@@ -1,8 +1,16 @@
+import math
+
 
 class Entry:
     def __init__(self, rectangle, child_node):
         self.rectangle = rectangle
         self.child_node = child_node
+
+    def set_rectangle(self, points):
+        self.rectangle = Rectangle(points)
+
+    def set_child_node(self, new_child_node):
+        self.child_node = new_child_node
 
 #
 # class LeafEntry:
@@ -41,6 +49,26 @@ class Rectangle:
         self.bottom_left_point = Point(self.bottom_left_point)
         self.top_right_point = Point(self.top_right_point)
 
+    def center(self):
+        num_of_dimensions = len(self.bottom_left_point.coordinates)
+        center_point = []
+
+        for i in range(num_of_dimensions):
+            a = self.bottom_left_point.coordinates[i]
+            b = self.top_right_point.coordinates[i]
+            center_point.append((a + b) / 2)
+
+        return center_point
+
+    def euclidean_distance(self, point):
+        center_of_rectangle = self.center()
+        squared_diff_sum = 0
+        for i in range(len(center_of_rectangle)):
+            squared_diff_sum += (center_of_rectangle[i] - point[i]) ** 2
+
+        distance = math.sqrt(squared_diff_sum)
+        return distance
+
     def calculate_overlap_enlargement(self, new_leaf_entry, index, node):
         # Create a new rectangle using the existing corners and the new_leaf_entry's point
         new_rectangle_points = [
@@ -72,7 +100,7 @@ class Rectangle:
             # else:
             #     overlap_enlargement += overlap
             overlap_enlargement += entry.rectangle.calculate_overlap_value(new_rectangle)
-        print(new_rectangle.bottom_left_point.coordinates, " ", new_rectangle.top_right_point.coordinates)
+        # print(new_rectangle.bottom_left_point.coordinates, " ", new_rectangle.top_right_point.coordinates)
 
         return overlap_enlargement
 
@@ -183,3 +211,13 @@ class Rectangle:
 # print("Group 2:")
 # for entry in group2:
 #     print(entry.point)
+
+# leaf_entry13 = LeafEntry([1, 3, 8.0, 2.0])
+# leaf_entry14 = LeafEntry([1, 4, 9.0, 4.0])
+# leaf_entry15 = LeafEntry([1, 5, 12.0, 1.0])
+#
+# rectangle5 = Rectangle([leaf_entry13.point, leaf_entry14.point, leaf_entry15.point])
+# print(rectangle5.center())
+# print(rectangle5.euclidean_distance([8.0, 2.0]))
+# print(rectangle5.euclidean_distance([9.0, 4.0]))
+# print(rectangle5.euclidean_distance([12.0, 1.0]))

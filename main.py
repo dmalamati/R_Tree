@@ -13,6 +13,30 @@ def calculate_entry_size(block_id, node_data):
     return len(csv_row.encode("utf-8"))
 
 
+# Function to write data to blocks
+def write_data_to_blocks(node_data, block_size):
+    current_block_id = 1  # variable that helps to take into consideration the block_id size
+    current_block_size = 0  # variable to count the size of each block while filling it with data
+    current_block_data = []  # list that will contain each blocks data
+    blocks_data = []  # list that will contain the blocks
+
+    for entry in node_data:
+        entry_size = calculate_entry_size(current_block_id, entry)
+        if current_block_size + entry_size <= block_size:  # if entry fits in the existing block
+            current_block_data.append(entry)  # insert entry to current block
+            current_block_size += entry_size  # update current block size
+        else:
+            blocks_data.append((current_block_id, current_block_data))  # if block is full insert it to blocks_data
+            current_block_id += 1
+            current_block_size = entry_size  # initialize new block size
+            current_block_data = [entry]  # initialize new block data by inserting the entry
+
+    if current_block_data:
+        blocks_data.append((current_block_id, current_block_data))
+
+    return blocks_data
+
+
 # Parse the .osm XML file
 tree = ET.parse(input_file)
 root = tree.getroot()
@@ -31,31 +55,6 @@ for element in root:
 
         # Add node data to the list
         node_data.append([node_id, latitude, longitude, name])
-
-
-# Function to write data to blocks
-def write_data_to_blocks(node_data, block_size):
-    current_block_id = 1
-    current_block_size = 0
-    current_block_data = []
-    blocks_data = []
-
-    for entry in node_data:
-        entry_size = calculate_entry_size(current_block_id, entry)
-
-        if current_block_size + entry_size <= block_size:
-            current_block_data.append(entry)
-            current_block_size += entry_size
-        else:
-            blocks_data.append((current_block_id, current_block_data))
-            current_block_id += 1
-            current_block_size = entry_size
-            current_block_data = [entry]
-
-    if current_block_data:
-        blocks_data.append((current_block_id, current_block_data))
-
-    return blocks_data
 
 
 # Write data to blocks

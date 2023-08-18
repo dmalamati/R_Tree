@@ -3,8 +3,8 @@ from Entry import Entry, LeafEntry
 
 
 class Node:
-    max_entries = 3  # M
-    min_entries = math.floor(max_entries/2)  # m
+    max_entries = 4  # M
+    min_entries = math.floor(max_entries/2.0)  # m
 
     def __init__(self, entries=None, parent=None, slot_in_parent=None):
         if entries is None:
@@ -32,9 +32,8 @@ class Node:
             return False
         return isinstance(self.entries[0], LeafEntry)
 
-    def insert_entries(self, entries):
-        for entry in entries:
-            self.entries.append(entry)
+    def set_entries(self, entries):
+        self.entries = entries
 
     def delete_entry(self, entry):
         pass
@@ -43,10 +42,19 @@ class Node:
         self.parent = parent
         self.slot_in_parent = slot_in_parent
 
+    def find_node_level(self):
+        if self.parent is not None:
+            return self.parent.find_node_level() + 1
+        else:
+            return 0
+
+
     @classmethod
     def set_max_entries(cls, number):
         cls.max_entries = number
-        cls.min_entries = math.floor(number/2)
+        cls.min_entries = math.floor(number/2.0)
+        # if cls.min_entries < 2:
+        #     cls.min_entries = 2  # 2 <= m <= M/2
 
 
 # class InternalNode(Node):
