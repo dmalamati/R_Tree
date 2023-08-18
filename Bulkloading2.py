@@ -2,11 +2,11 @@ import csv
 
 from hilbertcurve.hilbertcurve import HilbertCurve
 
-from Entry import Rectangle, Entry, LeafEntry
+from Entry import Rectangle, Entry, LeafEntry, Point
 from Node import Node
 
 
-def compute_hilbert_value(point, dimensions=2):
+def compute_hilbert_value(point, dimensions):
     p = 10
     hilbert_curve = HilbertCurve(p, dimensions)
     return hilbert_curve.distance_from_point(point)
@@ -71,8 +71,6 @@ def print_tree(node, level=1, indent="  "):
             print(indent * (level + 1) + f"Point: {leaf.point}")
 
 
-
-
 def read_block_data(csv_reader, block_id):
     block_data = []
 
@@ -89,7 +87,8 @@ def read_block_data(csv_reader, block_id):
 
     return block_data
 
-input_file = "datafile2.csv"
+
+input_file = "datafile.csv"
 
 with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     csv_reader = csv.reader(csv_file)
@@ -99,7 +98,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     total_entries = int(metadata[1])
     total_blocks = int(metadata[2])
     block_size = int(metadata[3])
-    max_entries = round(total_entries / total_blocks)
+    max_entries = round(block_size / total_blocks)
     blocks = []
     for block_id in range(1, total_blocks + 1):
         csv_file.seek(0)
@@ -108,44 +107,106 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         block_data = read_block_data(csv_reader, block_id)
         blocks.append(block_data)
 
-    points = []
+    leaf_entries = []  # list of leaf_entries
     for block in blocks:
-        for point in block:
-            block_id = point[0]
-            slot = point[1]
-            coordinates = point[2:]
-            complete_point = [block_id, slot] + coordinates
-            points.append(complete_point)
+        for point_data in block:
+            block_id = point_data[0]
+            slot = point_data[1]
+            lat = point_data[2]
+            long = point_data[3]
+            record = [block_id, slot, lat, long]
+            leaf_entry = LeafEntry(record)
+            leaf_entries.append(leaf_entry)
 
+    for leaf_entry in leaf_entries:
+        print(f"{leaf_entry.record_id} {leaf_entry.point}")
 
-    points_sorted_by_hilbert = sorted(points, key=lambda x: compute_hilbert_value(x[2:]))
-    leaf_entries = [LeafEntry(point) for point in points_sorted_by_hilbert]
+    leaf_entries_points_sorted_by_hilbert = sorted(leaf_entries, key=lambda entry: compute_hilbert_value(entry.point, len(entry.point)))
+    # Print the sorted points
+    for entry in leaf_entries_points_sorted_by_hilbert:
+        print(f"Record ID: {entry.record_id}, Point: {entry.point}")
 
-    # Create LeafNodes based on max_entries
+    # Assuming the Node class and the provided code is already defined...
+
+    # Process blocks to create leaf entries
+    leaf_entries = []
+    for block in blocks:
+        for point_data in block:
+            block_id = point_data[0]
+            slot = point_data[1]
+            lat = point_data[2]
+            long = point_data[3]
+            record = [block_id, slot, lat, long]
+            leaf_entry = LeafEntry(record)
+            leaf_entries.append(leaf_entry)
+
+    # Sorting leaf entries by Hilbert value
+    leaf_entries_sorted_by_hilbert = sorted(leaf_entries,
+                                            key=lambda entry: compute_hilbert_value(entry.point, len(entry.point)))
+
+    # Creating Nodes (which will act as LeafNodes in this context) based on max_entries
     leaf_nodes = []
-    while leaf_entries:
-        entries_for_node = leaf_entries[:max_entries]
-        node = Node(entries=entries_for_node)
-        leaf_nodes.append(node)
+    current_entries = []
+    Node.set_max_entries(max_entries)
+    for entry in leaf_entries_sorted_by_hilbert:
+        if len(current_entries) < Node.max_entries:
+            current_entries.append(entry)
+        else:
+            # Once we hit the max, we create a new Node and start a new list of entries
+            leaf_nodes.append(Node(current_entries))
+            current_entries = [entry]
 
-        # Remove the entries now included in a node
-        leaf_entries = leaf_entries[max_entries:]
+    # Don't forget the last set of entries if they exist
+    if current_entries:
+        leaf_nodes.append(Node(current_entries))
+
+    # Now, 'leaf_nodes' is a list containing all your Nodes acting as leaf nodes with entries up to max_entries.
 
     print(f"Created {len(leaf_nodes)} leaf nodes.")
 
-    # Compute MBR for leaf nodes
+    for i, node in enumerate(leaf_nodes):
+        print(f"Node {i + 1}:")
+        print(node)  # Using the __str__ method
+        for entry in node.entries:
+            print(f" - Record ID: {entry.record_id}, Point: {entry.point}")
+        print("------")
+
+    # 1. Calculate MBR for each leaf node
     for node in leaf_nodes:
-        entries = node.entries
-        lats = [entry.point[0] for entry in entries]  # Accessing 'lat' from `point` attribute
-        lons = [entry.point[1] for entry in entries]  # Accessing 'lon' from `point` attribute
+        # Extract all points from the node's entries
+        points = [entry.point for entry in node.entries]
 
-        min_lat = min(lats)
-        max_lat = max(lats)
-        min_lon = min(lons)
-        max_lon = max(lons)
+        # Calculate MBR using the Rectangle class
+        node.mbr = Rectangle(points)  # Assuming Node class has the attribute mbr
 
-        node.mbr = Rectangle([[min_lat, min_lon], [max_lat, max_lon]])
+    # 2. Create Entry instances
+    entries = [Entry(node.mbr, node) for node in leaf_nodes]
 
+    # 3. Create new nodes based on the Entry instances
+    internal_nodes = []  # List of nodes to store the Entry instances
+    current_entry_list = []
+
+    for entry in entries:
+        if len(current_entry_list) < Node.max_entries:
+            current_entry_list.append(entry)
+        else:
+            # Once we hit the max, we create a new Node and start a new list of entries
+            internal_nodes.append(Node(current_entry_list))
+            current_entry_list = [entry]
+
+    # Don't forget the last set of entries if they exist
+    if current_entry_list:
+        internal_nodes.append(Node(current_entry_list))
+
+    # Printing the created nodes with their entries
+    print(f"Created {len(internal_nodes)} internal nodes.")
+    for i, node in enumerate(internal_nodes):
+        print(f"Node {i + 1}:")
+        for entry in node.entries:
+            print(f" - MBR: {entry.rectangle}, Child Node: {entry.child_node}")
+        print("------")
+
+    '''
     # You already have the leaf nodes
     current_level_nodes = leaf_nodes
 
@@ -158,12 +219,14 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
 
     # The root node
     root = all_levels[-1][0]
-    '''
+    
     # Print nodes at each level
     for level, nodes in enumerate(all_levels, start=1):
         print(f"Level {level} Nodes:")
         for node in nodes:
             print(node.mbr)
-'''
+
     print(max_entries)
     print_tree(root)
+    
+'''
