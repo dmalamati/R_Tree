@@ -107,27 +107,6 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         block_data = read_block_data(csv_reader, block_id)
         blocks.append(block_data)
 
-    leaf_entries = []  # list of leaf_entries
-    for block in blocks:
-        for point_data in block:
-            block_id = point_data[0]
-            slot = point_data[1]
-            lat = point_data[2]
-            long = point_data[3]
-            record = [block_id, slot, lat, long]
-            leaf_entry = LeafEntry(record)
-            leaf_entries.append(leaf_entry)
-
-    for leaf_entry in leaf_entries:
-        print(f"{leaf_entry.record_id} {leaf_entry.point}")
-
-    leaf_entries_points_sorted_by_hilbert = sorted(leaf_entries, key=lambda entry: compute_hilbert_value(entry.point, len(entry.point)))
-    # Print the sorted points
-    for entry in leaf_entries_points_sorted_by_hilbert:
-        print(f"Record ID: {entry.record_id}, Point: {entry.point}")
-
-    # Assuming the Node class and the provided code is already defined...
-
     # Process blocks to create leaf entries
     leaf_entries = []
     for block in blocks:
