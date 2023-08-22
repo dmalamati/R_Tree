@@ -1,7 +1,6 @@
 import csv
 from Entry import Entry, LeafEntry, Rectangle, Point
 from Node import Node
-import pandas as pd
 
 input_file = "datafile.csv"
 overflow_treatment_level = 1
@@ -329,6 +328,8 @@ def adjust_rectangles(node):
             for leaf_entry in node.entries:
                 new_points.append(leaf_entry.point)
             node.parent.entries[node.slot_in_parent].set_rectangle(new_points)
+            # print("adjust rect says: ")
+            # print(node.parent.entries[node.slot_in_parent].rectangle.bottom_left_point.coordinates, " ", node.parent.entries[node.slot_in_parent].rectangle.top_right_point.coordinates)
         else:
             new_points = []
             for entry in node.entries:
@@ -345,25 +346,131 @@ def insert_entry_to_tree(tree, leaf_entry):
     if len(N.entries) < Node.max_entries:
         N.entries.append(leaf_entry)
         adjust_rectangles(N)
+        # print("insert says: ")
+        # print(N.parent.entries[N.slot_in_parent].rectangle.bottom_left_point.coordinates, " ",N.parent.entries[N.slot_in_parent].rectangle.top_right_point.coordinates)
+
     elif len(N.entries) == Node.max_entries:
         N.entries.append(leaf_entry)
         overflow_treatment(N, leaf_level, tree)
 
 
-# Read data from the CSV file
-def insert_one_by_one(max_entries, blocks):
+def delete_entry_from_tree(tree, leaf_entry):
+    N = find_leaf_node(leaf_entry, tree[0])
+    if N is not None:
+        # leaf_entry has been removed
+        if len(N.entries) < Node.min_entries:
+            condense_tree(tree, N)
+        else:
+            adjust_rectangles(N)
+    else:
+        print("no such entry in tree")
+
+
+def find_leaf_node(leaf_entry, root_node):
+    nodes_to_be_examined = [root_node]
+    while not isinstance(nodes_to_be_examined[0].entries[0], LeafEntry):
+        #
+        # print("looking in:")
+        # for i, n in enumerate(nodes_to_be_examined):
+        #     print("node", i, " : ")
+        #     for j, e in enumerate(n.entries):
+        #         print("     entry", j, " : ", e.rectangle.bottom_left_point.coordinates, " ", e.rectangle.top_right_point.coordinates)
+        old_nodes_index = len(nodes_to_be_examined)
+        for i in range(old_nodes_index):
+            for entry in nodes_to_be_examined[i].entries:
+                if entry.rectangle.overlaps_with_point(leaf_entry.point):
+                    nodes_to_be_examined.append(entry.child_node)
+        if len(nodes_to_be_examined) == old_nodes_index:
+            return None
+        else:
+            nodes_to_be_examined = nodes_to_be_examined[old_nodes_index:]
+    # print("len: ", len(nodes_to_be_examined))
+    for leaf_node in nodes_to_be_examined:
+        for entry in leaf_node.entries:
+            if leaf_entry.record_id == entry.record_id and leaf_entry.point == entry.point:
+                # if the leaf_entry is found in a leaf_node it removes it
+                leaf_node.entries.remove(entry)
+                return leaf_node
+    return None
+
+
+def get_leaf_entries_from_node(node):
+    leaf_entries = []
+    nodes_to_extract_leaf_entries = [node]
+    while len(nodes_to_extract_leaf_entries) > 0:
+        if isinstance(nodes_to_extract_leaf_entries[0].entries[0], LeafEntry):
+            for entry in nodes_to_extract_leaf_entries[0].entries:
+                leaf_entries.append(entry)
+            nodes_to_extract_leaf_entries.pop(0)
+        else:
+            for entry in nodes_to_extract_leaf_entries[0].entries:
+                nodes_to_extract_leaf_entries.append(entry.child_node)
+            nodes_to_extract_leaf_entries.pop(0)
+    return leaf_entries
+
+
+def remove_children_from_tree(tree, node):
+    children_of_nodes_to_be_removed = [node]
+    while len(children_of_nodes_to_be_removed) > 0:
+        if isinstance(children_of_nodes_to_be_removed[0].entries[0], Entry):
+            for entry in children_of_nodes_to_be_removed[0].entries:
+                children_of_nodes_to_be_removed.append(entry.child_node)
+                tree.remove(entry.child_node)
+        children_of_nodes_to_be_removed.pop(0)
+
+
+def condense_tree(tree, leaf_node):
+    node = leaf_node
+    eliminated_nodes = []
+    while node.parent is not None:
+        if len(node.entries) < Node.min_entries:
+            eliminated_nodes.append(node)
+            node.parent.entries.remove(node.parent.entries[node.slot_in_parent])
+            # update slot in parent for other entries
+            for i, entry in enumerate(node.parent.entries):
+                entry.child_node.set_slot_in_parent(i)
+            tree.remove(node)
+            # if node is internal node then remove its children from the tree
+            if isinstance(node.entries[0], Entry):
+                remove_children_from_tree(tree, node)
+            node = node.parent
+        else:
+            adjust_rectangles(node)
+            break
+    root = tree[0]
+    if len(root.entries) < 2 and len(tree) > 1:
+        for entry in root.entries:
+            entry.child_node.set_parent(None, None)
+        tree.remove(root)
+    # insert leaf entries of eliminated_nodes in tree
+    print("len of tree=", len(tree))
+    print("condence_tree says: eliminated_nodes=", len(eliminated_nodes))
+    for i, n in enumerate(eliminated_nodes):
+        print("     node ", i)
+        if isinstance(n.entries[0], LeafEntry):
+            for j, entry in enumerate(n.entries):
+                print("         leaf_entry ", j, ": ", entry.point)
+        else:
+            for j, entry in enumerate(n.entries):
+                print("         entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
+    print("\n")
+    for i, n in enumerate(tree):
+        print("node ", i)
+        if isinstance(n.entries[0], LeafEntry):
+            for j, entry in enumerate(n.entries):
+                print("     leaf_entry ", j, ": ", entry.point)
+        else:
+            for j, entry in enumerate(n.entries):
+                print("     entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
+    print("condence_tree",)
+
     global overflow_treatment_level
-    overflow_treatment_level = 1
-    tree = []
-    root = Node()
-    Node.set_max_entries(max_entries)
-    tree.append(root)
-    for block in blocks:
-        for record in block:
-            new_leaf_entry = LeafEntry(record)
-            insert_entry_to_tree(tree, new_leaf_entry)
-    return tree
-    # return full tree
+    overflow_treatment_level = tree[-1].find_node_level()
+    print("overflow level = ", overflow_treatment_level)
+    for node in eliminated_nodes:
+        leaf_entries_to_insert = get_leaf_entries_from_node(node)
+        for leaf_entry in leaf_entries_to_insert:
+            insert_entry_to_tree(tree, leaf_entry)
 
 
 with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
@@ -392,205 +499,176 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         block_data = read_block_data(csv_reader, block_id)
         blocks.append(block_data)
 
-    # για να κανεις insert πρεπει:
-    # 1. set Node.set_max_entry_size(max_entry_size)
-    # 2. set global overflow_treatment_level = tree[-1].find_node_level()
-    # 3. use insert_entry_to_tree(tree, leaf_entry)
-    max_entries = int(total_entries / total_blocks)
-    print("max entries = ", max_entries)
-    tree = insert_one_by_one(max_entries, blocks)
-    for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level())
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.point)
-            else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
-
-    # print(blocks)
-    # for block_data in blocks:
-    #     for record in block_data:
-    #         print(record)
-    #         print("\n")
-    ####################################################################
-    # num_of_dimensions = 2
-    # max_entries = 4
-    # tree = []
-    # root = []
-    # tree.append(root)
-    # leaf_level = 0
-    # for block in blocks:
-    #     for record in block:
-    #         new_entry = LeafEntry(record)
-    #         N = choose_subtree(tree, leaf_level, new_entry)
-    #         if len(N) < max_entries:
-    #             N.append(new_entry)
-    #         elif len(N) == max_entries:
-    #             break
-    #
-    # for node in tree:
-    #     print("node")
-    #     for entry in node:
-    #         print(entry.record_id, " ", entry.point)
-    ####################################################################
-
-    # START TEST: choose_subtree
-    # num_of_dimensions = 2
-    # max_entries = 3
-    # leaf_entry1 = LeafEntry([1, 0, 1.0, 2.0])
-    # leaf_entry2 = LeafEntry([1, 1, 2.0, 3.0])
-    # leaf_entry3 = LeafEntry([1, 2, 0.0, 4.0])
-    # leaf_entry4 = LeafEntry([1, 3, 5.0, 6.0])
-    # leaf_entry5 = LeafEntry([1, 4, 1.0, 3.0])
-    # leaf_entry6 = LeafEntry([1, 5, 2.0, 2.0])
-    # leaf_entry7 = LeafEntry([1, 5, 6.0, 4.0])
-    # leaf_entry8 = LeafEntry([1, 5, 8.0, 6.0])
-    #
-    # # leaf_node1 = [leaf_entry3, leaf_entry1, leaf_entry5]
-    # # leaf_node2 = [leaf_entry2, leaf_entry6, leaf_entry4]
-    # leaf_node1 = Node([leaf_entry3, leaf_entry1, leaf_entry5])
-    # leaf_node2 = Node([leaf_entry2, leaf_entry6, leaf_entry4])
-    # leaf_node3 = Node([leaf_entry7, leaf_entry8])
-    #
-    # rectangle1 = Rectangle([[0.0, 4.0], [1.0, 2.0], [1.0, 3.0]])
-    # rectangle2 = Rectangle([[2.0, 3.0], [2.0, 2.0], [5.0, 6.0]])
-    # rectangle3 = Rectangle([[6.0, 4.0], [8.0, 5.0]])
-    #
-    # entry1 = Entry(rectangle1, leaf_node1)
-    # entry2 = Entry(rectangle2, leaf_node2)
-    # entry3 = Entry(rectangle3, leaf_node3)
-    #
-    # big_rect = Rectangle([[0.0, 4.0], [1.0, 2.0], [1.0, 3.0], [2.0, 3.0], [2.0, 2.0], [5.0, 6.0], [6.0, 4.0], [8.0, 5.0]])
-    # # internal_node1 = Node([entry1, entry2, entry3])
-    # # il_entry = Entry(big_rect, internal_node1)
-    #
-    # # root = [entry1, entry2]
-    # root = Node([entry1, entry2, entry3])
-    # leaf_node1.set_parent(root)
-    # leaf_node2.set_parent(root)
-    # leaf_node3.set_parent(root)
-    # tree = [root, leaf_node1, leaf_node2, leaf_node3]
-    # new_leaf_entry = LeafEntry([2, 1, 7.0, 6.0])
-    # N = choose_subtree(tree, 1, new_leaf_entry)
-
-    # if len(N) < max_entries:
-    #     N.append(new_leaf_entry)
-    # elif len(N) == max_entries:  # overflow_treatment
-    #     N.append(new_leaf_entry)
-
-    # for entry in N:
-    #     print(entry.point)
-    # END TEST: choose_subtree
-
     # START TEST: split
-    # leaf_entry1 = LeafEntry([1, 0, 0.0, 4.0])
-    # leaf_entry2 = LeafEntry([1, 1, 1.0, 2.0])
-    # leaf_entry3 = LeafEntry([1, 2, 1.0, 3.0])
+    leaf_entry1 = LeafEntry([1, 0, 0.0, 4.0])
+    leaf_entry2 = LeafEntry([1, 1, 1.0, 2.0])
+    leaf_entry3 = LeafEntry([1, 2, 1.0, 3.0])
+
+    leaf_entry4 = LeafEntry([1, 3, 2.0, 2.0])
+    leaf_entry5 = LeafEntry([1, 4, 2.0, 3.0])
+    leaf_entry6 = LeafEntry([1, 5, 4.0, 1.0])
+
+    leaf_entry7 = LeafEntry([1, 6, 1.0, 7.0])
+    leaf_entry8 = LeafEntry([1, 7, 2.0, 6.0])
+    leaf_entry9 = LeafEntry([1, 8, 3.0, 8.0])
+
+    leaf_entry10 = LeafEntry([1, 9, 7.0, 5.0])
+    leaf_entry11 = LeafEntry([1, 10, 8.0, 7.0])
+    leaf_entry12 = LeafEntry([1, 11, 9.0, 6.0])
+
+    leaf_entry13 = LeafEntry([1, 12, 8.0, 2.0])
+    leaf_entry14 = LeafEntry([1, 13, 9.0, 4.0])
+    leaf_entry15 = LeafEntry([1, 14, 12.0, 1.0])
+
+    leaf_entry16 = LeafEntry([1, 15, 10.0, 5.0])
+    leaf_entry17 = LeafEntry([1, 16, 10.0, 7.0])
+    leaf_entry18 = LeafEntry([1, 17, 11.0, 5.0])
+
+    leaf_entry19 = LeafEntry([1, 18, 6.0, 9.0])
+    leaf_entry20 = LeafEntry([1, 19, 6.0, 10.0])
+    leaf_entry21 = LeafEntry([1, 20, 7.0, 10.0])
+
+    leaf_entry22 = LeafEntry([1, 21, 10.0, 11.0])
+    leaf_entry23 = LeafEntry([1, 22, 12.0, 12.0])
+    leaf_entry24 = LeafEntry([1, 23, 13.0, 9.0])
+
+    leaf_entry25 = LeafEntry([1, 24, 8.0, 13.0])
+    leaf_entry26 = LeafEntry([1, 25, 9.0, 14.0])
+    leaf_entry27 = LeafEntry([1, 26, 10.0, 13.0])
+
+    leaf_node1 = Node([leaf_entry1, leaf_entry2, leaf_entry3])
+    leaf_node2 = Node([leaf_entry4, leaf_entry5, leaf_entry6])
+    leaf_node3 = Node([leaf_entry7, leaf_entry8, leaf_entry9])
+    leaf_node4 = Node([leaf_entry10, leaf_entry11, leaf_entry12])
+    leaf_node5 = Node([leaf_entry13, leaf_entry14, leaf_entry15])
+    leaf_node6 = Node([leaf_entry16, leaf_entry17, leaf_entry18])
+    leaf_node7 = Node([leaf_entry19, leaf_entry20, leaf_entry21])
+    leaf_node8 = Node([leaf_entry22, leaf_entry23, leaf_entry24])
+    leaf_node9 = Node([leaf_entry25, leaf_entry26, leaf_entry27])
+
+    rectangle1 = Rectangle([leaf_entry1.point, leaf_entry2.point, leaf_entry3.point])
+    rectangle2 = Rectangle([leaf_entry4.point, leaf_entry5.point, leaf_entry6.point])
+    rectangle3 = Rectangle([leaf_entry7.point, leaf_entry8.point, leaf_entry9.point])
+    rectangle4 = Rectangle([leaf_entry10.point, leaf_entry11.point, leaf_entry12.point])
+    rectangle5 = Rectangle([leaf_entry13.point, leaf_entry14.point, leaf_entry15.point])
+    rectangle6 = Rectangle([leaf_entry16.point, leaf_entry17.point, leaf_entry18.point])
+    rectangle7 = Rectangle([leaf_entry19.point, leaf_entry20.point, leaf_entry21.point])
+    rectangle8 = Rectangle([leaf_entry22.point, leaf_entry23.point, leaf_entry24.point])
+    rectangle9 = Rectangle([leaf_entry25.point, leaf_entry26.point, leaf_entry27.point])
+
+    entry1 = Entry(rectangle1, leaf_node1)
+    entry2 = Entry(rectangle2, leaf_node2)
+    entry3 = Entry(rectangle3, leaf_node3)
+    entry4 = Entry(rectangle4, leaf_node4)
+    entry5 = Entry(rectangle5, leaf_node5)
+    entry6 = Entry(rectangle6, leaf_node6)
+    entry7 = Entry(rectangle7, leaf_node7)
+    entry8 = Entry(rectangle8, leaf_node8)
+    entry9 = Entry(rectangle9, leaf_node9)
+
+    # internal_node1 = Node([entry1, entry2, entry3])
+    internal_node1 = Node([entry1, entry2])
+    internal_node2 = Node([entry4, entry5, entry6])
+    internal_node3 = Node([entry7, entry8, entry9])
+
+    # root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point.coordinates, entry1.rectangle.top_right_point.coordinates, entry2.rectangle.bottom_left_point.coordinates, entry2.rectangle.top_right_point.coordinates, entry3.rectangle.bottom_left_point.coordinates, entry3.rectangle.top_right_point.coordinates])
+    root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point.coordinates, entry1.rectangle.top_right_point.coordinates, entry2.rectangle.bottom_left_point.coordinates, entry2.rectangle.top_right_point.coordinates])
+    root_rectangle2 = Rectangle([entry4.rectangle.bottom_left_point.coordinates, entry4.rectangle.top_right_point.coordinates, entry5.rectangle.bottom_left_point.coordinates, entry5.rectangle.top_right_point.coordinates, entry6.rectangle.bottom_left_point.coordinates, entry6.rectangle.top_right_point.coordinates])
+    root_rectangle3 = Rectangle([entry7.rectangle.bottom_left_point.coordinates, entry7.rectangle.top_right_point.coordinates, entry8.rectangle.bottom_left_point.coordinates, entry8.rectangle.top_right_point.coordinates, entry9.rectangle.bottom_left_point.coordinates, entry9.rectangle.top_right_point.coordinates])
+
+    root_entry1 = Entry(root_rectangle1, internal_node1)
+    root_entry2 = Entry(root_rectangle2, internal_node2)
+    root_entry3 = Entry(root_rectangle3, internal_node3)
+
+    # root_node = Node([root_entry1, root_entry2, root_entry3])
+    root_node = Node([root_entry1, root_entry2])
+
+    leaf_node1.set_parent(internal_node1, 0)
+    leaf_node2.set_parent(internal_node1, 1)
+    leaf_node3.set_parent(internal_node1, 2)
+    leaf_node4.set_parent(internal_node2, 0)
+    leaf_node5.set_parent(internal_node2, 1)
+    leaf_node6.set_parent(internal_node2, 2)
+    leaf_node7.set_parent(internal_node3, 0)
+    leaf_node8.set_parent(internal_node3, 1)
+    leaf_node9.set_parent(internal_node3, 2)
+
+    internal_node1.set_parent(root_node, 0)
+    internal_node2.set_parent(root_node, 1)
+    internal_node3.set_parent(root_node, 2)
+
+    Node.set_max_entries(4)
+
+    # tree = [root_node, internal_node1, internal_node2, internal_node3, leaf_node1, leaf_node2, leaf_node3, leaf_node4, leaf_node5, leaf_node6, leaf_node7, leaf_node8, leaf_node9]
+    tree = [root_node, internal_node1, internal_node2, leaf_node1, leaf_node2, leaf_node4, leaf_node5, leaf_node6]
+
+    # leaf_entry1 = LeafEntry([1, 0, 1.0, 1.0])
+    # leaf_entry2 = LeafEntry([1, 1, 1.0, 4.0])
+    # leaf_entry3 = LeafEntry([1, 2, 5.0, 1.0])
     #
-    # leaf_entry4 = LeafEntry([1, 3, 2.0, 2.0])
-    # leaf_entry5 = LeafEntry([1, 4, 2.0, 3.0])
-    # leaf_entry6 = LeafEntry([1, 5, 4.0, 1.0])
+    # leaf_entry4 = LeafEntry([1, 3, 3.0, 3.0])
+    # leaf_entry5 = LeafEntry([1, 4, 5.0, 3.0])
+    # leaf_entry6 = LeafEntry([1, 5, 5.0, 5.0])
     #
-    # leaf_entry7 = LeafEntry([1, 5, 1.0, 7.0])
-    # leaf_entry8 = LeafEntry([1, 5, 2.0, 6.0])
-    # leaf_entry9 = LeafEntry([1, 5, 3.0, 8.0])
-    #
-    # leaf_entry10 = LeafEntry([1, 0, 7.0, 5.0])
-    # leaf_entry11 = LeafEntry([1, 1, 8.0, 7.0])
-    # leaf_entry12 = LeafEntry([1, 2, 9.0, 6.0])
-    #
-    # leaf_entry13 = LeafEntry([1, 3, 8.0, 2.0])
-    # leaf_entry14 = LeafEntry([1, 4, 9.0, 4.0])
-    # leaf_entry15 = LeafEntry([1, 5, 12.0, 1.0])
-    #
-    # leaf_entry16 = LeafEntry([1, 5, 10.0, 5.0])
-    # leaf_entry17 = LeafEntry([1, 5, 10.0, 7.0])
-    # leaf_entry18 = LeafEntry([1, 5, 11.0, 5.0])
+    # leaf_entry7 = LeafEntry([1, 6, 4.0, 3.0])
+    # leaf_entry8 = LeafEntry([1, 7, 4.0, 6.0])
+    # leaf_entry9 = LeafEntry([1, 8, 3.0, 6.0])
     #
     # leaf_node1 = Node([leaf_entry1, leaf_entry2, leaf_entry3])
     # leaf_node2 = Node([leaf_entry4, leaf_entry5, leaf_entry6])
     # leaf_node3 = Node([leaf_entry7, leaf_entry8, leaf_entry9])
-    # leaf_node4 = Node([leaf_entry10, leaf_entry11, leaf_entry12])
-    # leaf_node5 = Node([leaf_entry13, leaf_entry14, leaf_entry15])
-    # leaf_node6 = Node([leaf_entry16, leaf_entry17, leaf_entry18])
     #
     # rectangle1 = Rectangle([leaf_entry1.point, leaf_entry2.point, leaf_entry3.point])
     # rectangle2 = Rectangle([leaf_entry4.point, leaf_entry5.point, leaf_entry6.point])
     # rectangle3 = Rectangle([leaf_entry7.point, leaf_entry8.point, leaf_entry9.point])
-    # rectangle4 = Rectangle([leaf_entry10.point, leaf_entry11.point, leaf_entry12.point])
-    # rectangle5 = Rectangle([leaf_entry13.point, leaf_entry14.point, leaf_entry15.point])
-    # rectangle6 = Rectangle([leaf_entry16.point, leaf_entry17.point, leaf_entry18.point])
-    # print("rect1: ", rectangle1.bottom_left_point.coordinates, " ", rectangle1.top_right_point.coordinates)
-    # print("rect2: ", rectangle2.bottom_left_point.coordinates, " ", rectangle2.top_right_point.coordinates)
-    # print("rect3: ", rectangle3.bottom_left_point.coordinates, " ", rectangle3.top_right_point.coordinates)
-    # print("rect4: ", rectangle4.bottom_left_point.coordinates, " ", rectangle4.top_right_point.coordinates)
-    # print("rect5: ", rectangle5.bottom_left_point.coordinates, " ", rectangle5.top_right_point.coordinates)
-    # print("rect6: ", rectangle6.bottom_left_point.coordinates, " ", rectangle6.top_right_point.coordinates)
     #
     # entry1 = Entry(rectangle1, leaf_node1)
     # entry2 = Entry(rectangle2, leaf_node2)
     # entry3 = Entry(rectangle3, leaf_node3)
-    # entry4 = Entry(rectangle4, leaf_node4)
-    # entry5 = Entry(rectangle5, leaf_node5)
-    # entry6 = Entry(rectangle6, leaf_node6)
     #
-    # internal_node1 = Node([entry1, entry2, entry3])
-    # internal_node2 = Node([entry4, entry5, entry6])
-    #
-    # root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point.coordinates, entry1.rectangle.top_right_point.coordinates, entry2.rectangle.bottom_left_point.coordinates, entry2.rectangle.top_right_point.coordinates, entry3.rectangle.bottom_left_point.coordinates, entry3.rectangle.top_right_point.coordinates])
-    # root_rectangle2 = Rectangle([entry4.rectangle.bottom_left_point.coordinates, entry4.rectangle.top_right_point.coordinates, entry5.rectangle.bottom_left_point.coordinates, entry5.rectangle.top_right_point.coordinates, entry6.rectangle.bottom_left_point.coordinates, entry6.rectangle.top_right_point.coordinates])
-    # print("root rect1: ", root_rectangle1.bottom_left_point.coordinates, " ", root_rectangle1.top_right_point.coordinates)
-    # print("root rect2: ", root_rectangle2.bottom_left_point.coordinates, " ", root_rectangle2.top_right_point.coordinates)
-    #
-    # root_entry1 = Entry(root_rectangle1, internal_node1)
-    # root_entry2 = Entry(root_rectangle2, internal_node2)
-    #
-    # root_node = Node([root_entry1, root_entry2])
-    #
-    # leaf_node1.set_parent(internal_node1, 0)
-    # leaf_node2.set_parent(internal_node1, 1)
-    # leaf_node3.set_parent(internal_node1, 2)
-    # leaf_node4.set_parent(internal_node2, 0)
-    # leaf_node5.set_parent(internal_node2, 1)
-    # leaf_node6.set_parent(internal_node2, 2)
-    #
-    # internal_node1.set_parent(root_node, 0)
-    # internal_node2.set_parent(root_node, 1)
-    #
-    # tree = [root_node, internal_node1, internal_node2, leaf_node1, leaf_node2, leaf_node3, leaf_node4, leaf_node5, leaf_node6]
-    #
-    # new_leaf_entry = LeafEntry([1, 5, 14.0, 6.0])
-    # N = choose_subtree(tree, new_leaf_entry, 2)
-    # print("Chosen rect: ", N.parent.entries[N.slot_in_parent].rectangle.bottom_left_point.coordinates, " ", N.parent.entries[N.slot_in_parent].rectangle.top_right_point.coordinates)
-    # # adjust_rectangles(N)
-    # # print("New rect: ", N.parent.entries[N.slot_in_parent].rectangle.bottom_left_point.coordinates, " ", N.parent.entries[N.slot_in_parent].rectangle.top_right_point.coordinates)
-    # # par = N.parent
-    # # print("New parent rect: ", par.parent.entries[par.slot_in_parent].rectangle.bottom_left_point.coordinates, " ", par.parent.entries[par.slot_in_parent].rectangle.top_right_point.coordinates)
-    # if len(N.entries) == 3:
-    #     N.entries.append(new_leaf_entry)
-    #     group1, group2 = split(N, 1)
-    #
-    # # group1, group2 = split(node, 2)
-    # if isinstance(N.entries[0], LeafEntry):
-    #     print("Leaf")
-    #     print("Group 1:")
-    #     for entry in group1:
-    #         print(entry.point)
-    #     print("Group 2:")
-    #     for entry in group2:
-    #         print(entry.point)
-    # else:
-    #     print("Not Leaf")
-    #     print("Group 1:")
-    #     for entry in group1:
-    #         print(entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
-    #     print("Group 2:")
-    #     for entry in group2:
-    #         print(entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
-    # END TEST: split
+    # root = Node([entry1, entry2, entry3])
+    # Node.set_max_entries(4)
+    # leaf_node1.set_parent(root, 0)
+    # leaf_node2.set_parent(root, 1)
+    # leaf_node3.set_parent(root, 2)
+    # tree = [root, leaf_node1, leaf_node2, leaf_node3]
 
+    for i, n in enumerate(tree):
+        print("node ", i)
+        if isinstance(n.entries[0], LeafEntry):
+            for j, entry in enumerate(n.entries):
+                print("     leaf_entry ", j, ": ", entry.point)
+        else:
+            for j, entry in enumerate(n.entries):
+                print("     entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
 
+    leaf_entry_to_find = LeafEntry([1, 1, 1.0, 2.0])
+    delete_entry_from_tree(tree, leaf_entry_to_find)
 
+    for i, n in enumerate(tree):
+        print("node ", i)
+        if isinstance(n.entries[0], LeafEntry):
+            for j, entry in enumerate(n.entries):
+                print("     leaf_entry ", j, ": ", entry.point)
+        else:
+            for j, entry in enumerate(n.entries):
+                print("     entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
 
+    print("new deletion:")
+    leaf_entry_to_find = LeafEntry([1, 2, 1.0, 3.0])
+    delete_entry_from_tree(tree, leaf_entry_to_find)
+    print("len of tree", len(tree))
+    for i, n in enumerate(tree):
+        print("node ", i)
+        if isinstance(n.entries[0], LeafEntry):
+            for j, entry in enumerate(n.entries):
+                print("     leaf_entry ", j, ": ", entry.point)
+        else:
+            for j, entry in enumerate(n.entries):
+                print("     entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
+
+    # leaf_entries = get_leaf_entries_from_node(leaf_node2)
+    # for i, entry in enumerate(leaf_entries):
+    #     print("entry ", i, " ", entry.point)
 
 

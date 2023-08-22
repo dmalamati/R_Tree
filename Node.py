@@ -42,12 +42,14 @@ class Node:
         self.parent = parent
         self.slot_in_parent = slot_in_parent
 
+    def set_slot_in_parent(self, slot_in_parent):
+        self.slot_in_parent = slot_in_parent
+
     def find_node_level(self):
         if self.parent is not None:
             return self.parent.find_node_level() + 1
         else:
             return 0
-
 
     @classmethod
     def set_max_entries(cls, number):

@@ -12,12 +12,6 @@ class Entry:
     def set_child_node(self, new_child_node):
         self.child_node = new_child_node
 
-#
-# class LeafEntry:
-#     def __init__(self, point, record_id):
-#         self.point = point
-#         self.record_id = record_id
-
 
 class LeafEntry:
     def __init__(self, record):
@@ -80,25 +74,11 @@ class Rectangle:
 
         # Calculate the overlap enlargement cost
         overlap_enlargement = 0
-        number_of_dimensions = len(self.bottom_left_point.coordinates)
+        # number_of_dimensions = len(self.bottom_left_point.coordinates)
 
         for i, entry in enumerate(node.entries):
             if i == index:
                 continue
-            # bottom_left_point = [float('inf')] * number_of_dimensions
-            # top_right_point = [float('-inf')] * number_of_dimensions
-            # for d in range(number_of_dimensions):
-            #     bottom_left_point[d] = max(new_rectangle.bottom_left_point.coordinates[d], entry.rectangle.bottom_left_point.coordinates[d])
-            #     top_right_point[d] = min(new_rectangle.top_right_point.coordinates[d], entry.rectangle.top_right_point.coordinates[d])
-            # # find intersected area
-            # overlap = 1
-            # for d in range(number_of_dimensions):
-            #     overlap *= top_right_point[d] - bottom_left_point[d]
-            #
-            # if overlap <= 0:
-            #     overlap_enlargement += 0
-            # else:
-            #     overlap_enlargement += overlap
             overlap_enlargement += entry.rectangle.calculate_overlap_value(new_rectangle)
         # print(new_rectangle.bottom_left_point.coordinates, " ", new_rectangle.top_right_point.coordinates)
 
@@ -152,28 +132,11 @@ class Rectangle:
         # print(overlap_value)
         return overlap_value
 
-    # def calculate_overlap_value(self, other_rectangle):
-    #     overlap_value = 0
-    #     number_of_dimensions = len(self.bottom_left_point.coordinates)
-    #
-    #     bottom_left_point = [float('inf')] * number_of_dimensions
-    #     top_right_point = [float('-inf')] * number_of_dimensions
-    #     for d in range(number_of_dimensions):
-    #         bottom_left_point[d] = max(other_rectangle.bottom_left_point.coordinates[d],
-    #                                    self.bottom_left_point.coordinates[d])
-    #         top_right_point[d] = min(other_rectangle.top_right_point.coordinates[d],
-    #                                  self.top_right_point.coordinates[d])
-    #     # find intersected area
-    #     overlap = 1
-    #     for d in range(number_of_dimensions):
-    #         overlap *= top_right_point[d] - bottom_left_point[d]
-    #
-    #     if overlap <= 0:
-    #         overlap_value += 0
-    #     else:
-    #         overlap_value += overlap
-    #
-    #     return overlap_value
+    def overlaps_with_point(self, point):
+        for i in range(len(self.bottom_left_point.coordinates)):
+            if not(self.bottom_left_point.coordinates[i] <= point[i] <= self.top_right_point.coordinates[i]):
+                return False
+        return True
 
 
 # Example usage for 2D rectangle
@@ -212,12 +175,10 @@ class Rectangle:
 # for entry in group2:
 #     print(entry.point)
 
-# leaf_entry13 = LeafEntry([1, 3, 8.0, 2.0])
-# leaf_entry14 = LeafEntry([1, 4, 9.0, 4.0])
-# leaf_entry15 = LeafEntry([1, 5, 12.0, 1.0])
+# leaf_entry13 = LeafEntry([1, 3, 0.0, 0.0])
+# leaf_entry14 = LeafEntry([1, 4, 1.0, 1.0])
+# leaf_entry15 = LeafEntry([1, 5, 4.0, 4.0])
 #
 # rectangle5 = Rectangle([leaf_entry13.point, leaf_entry14.point, leaf_entry15.point])
-# print(rectangle5.center())
-# print(rectangle5.euclidean_distance([8.0, 2.0]))
-# print(rectangle5.euclidean_distance([9.0, 4.0]))
-# print(rectangle5.euclidean_distance([12.0, 1.0]))
+# print(rectangle5.bottom_left_point.coordinates, " ", rectangle5.top_right_point.coordinates)
+# print(rectangle5.overlaps_with_point([4.0, 0.0001]))
