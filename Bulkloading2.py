@@ -6,69 +6,334 @@ from Entry import Rectangle, Entry, LeafEntry, Point
 from Node import Node
 
 
+def choose_subtree(new_leaf_entry, tree):
+    N = tree[0]  # Start at the root node
+
+    if len(N.entries) == 0:
+        return N
+    while not isinstance(N.entries[0], LeafEntry):  # While N is not a leaf
+        if isinstance(N.entries[0].child_node.entries[0], LeafEntry):  # if the children of N are leafs
+            min_overlap_cost = float('inf')
+            min_area_cost = float('inf')
+            chosen_entry = None
+
+            for i, entry in enumerate(N.entries):  # for every entry in N where N a node whose child is a leaf
+                overlap_enlargement = entry.rectangle.calculate_overlap_enlargement(new_leaf_entry, i, N)
+                area_enlargement = entry.rectangle.calculate_area_enlargement(new_leaf_entry)
+                # print("overlap: ", overlap_enlargement)
+                # print("area: ", area_enlargement)
+
+                if overlap_enlargement < min_overlap_cost or (overlap_enlargement == min_overlap_cost and area_enlargement < min_area_cost):
+                    min_overlap_cost = overlap_enlargement
+                    min_area_cost = area_enlargement
+                    chosen_entry = entry
+        else:   # if the children of N are NOT leafs
+            min_area_cost = float('inf')
+            min_area = float('inf')
+            chosen_entry = None
+
+            for entry in N.entries:  # for every entry in N where N a node whose child is not a leaf
+                area_enlargement = entry.rectangle.calculate_area_enlargement(new_leaf_entry)
+                new_area = entry.rectangle.calculate_area() + area_enlargement
+                # print("area enlargement: ", area_enlargement)
+                # print("new area: ", new_area)
+
+                if area_enlargement < min_area_cost or (area_enlargement == min_area_cost and new_area < min_area):
+                    min_area_cost = area_enlargement
+                    min_area = new_area
+                    chosen_entry = entry
+
+        N = chosen_entry.child_node
+
+    return N  # the most suitable leaf node for the new leaf_entry
+
+
+def split(node, min_entries):
+    split_axis = choose_split_axis(node.entries, min_entries)
+    group1, group2 = choose_split_index(node.entries, split_axis, min_entries)
+
+    return group1, group2
+
+
+def choose_split_axis(entries, min_entries):
+    min_sum_margin = float('inf')
+    chosen_axis = None
+    if isinstance(entries[0], LeafEntry):
+        # print(" in for leaf")
+        for axis in range(len(entries[0].point)):
+            entries.sort(key=lambda entry: entry.point[axis])
+
+            sum_margin = 0
+            for i in range(min_entries, len(entries) - min_entries + 1):
+                rect1 = Rectangle([entry.point for entry in entries[:i]])
+                rect2 = Rectangle([entry.point for entry in entries[i:]])
+                sum_margin += rect1.calculate_margin() + rect2.calculate_margin()
+
+            if sum_margin < min_sum_margin:
+                min_sum_margin = sum_margin
+                chosen_axis = axis
+    else:
+        # print(" in for not leaf")
+        for axis in range(len(entries[0].rectangle.bottom_left_point.coordinates)):
+            entries.sort(key=lambda entry: entry.rectangle.bottom_left_point.coordinates[axis])
+
+            sum_margin = 0
+            for i in range(min_entries, len(entries) - min_entries + 1):
+                rect1_points = []
+                for entry in entries[:i]:
+                    rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                    rect1_points.append(entry.rectangle.top_right_point.coordinates)
+                rect1 = Rectangle(rect1_points)
+
+                rect2_points = []
+                for entry in entries[i:]:
+                    rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                    rect2_points.append(entry.rectangle.top_right_point.coordinates)
+                rect2 = Rectangle(rect2_points)
+
+                sum_margin += rect1.calculate_margin() + rect2.calculate_margin()
+
+            if sum_margin < min_sum_margin:
+                min_sum_margin = sum_margin
+                chosen_axis = axis
+
+            # entries.sort(key=lambda entry: entry.rectangle.top_right_point.coordinates[axis])
+
+    return chosen_axis
+
+
+def choose_split_index(entries, split_axis, min_entries):
+    if isinstance(entries[0], LeafEntry):
+        entries.sort(key=lambda entry: entry.point[split_axis])
+        min_overlap = float('inf')
+        min_area = float('inf')
+        chosen_index = None
+        for i in range(min_entries, len(entries) - min_entries + 1):
+            rect1 = Rectangle([entry.point for entry in entries[:i]])
+            rect2 = Rectangle([entry.point for entry in entries[i:]])
+            overlap = rect1.calculate_overlap_value(rect2)
+            overall_area = rect1.calculate_area() + rect2.calculate_area()
+            # print(" overlap of rect1 ", rect1.bottom_left_point.coordinates, " ", rect1.top_right_point.coordinates," and rect2 ", rect2.bottom_left_point.coordinates, " ", rect2.top_right_point.coordinates, " :", overlap)
+            # print("overall area: ", overall_area)
+            if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
+                min_overlap = overlap
+                min_area = overall_area
+                chosen_index = i
+    else:
+        entries.sort(key=lambda entry: entry.rectangle.bottom_left_point.coordinates[split_axis])
+
+        min_overlap = float('inf')
+        min_area = float('inf')
+        chosen_index = None
+
+        for i in range(min_entries, len(entries) - min_entries + 1):
+            rect1_points = []
+            for entry in entries[:i]:
+                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect1_points.append(entry.rectangle.top_right_point.coordinates)
+            rect1 = Rectangle(rect1_points)
+
+            rect2_points = []
+            for entry in entries[i:]:
+                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect2_points.append(entry.rectangle.top_right_point.coordinates)
+            rect2 = Rectangle(rect2_points)
+
+            overlap = rect1.calculate_overlap_value(rect2)
+            overall_area = rect1.calculate_area() + rect2.calculate_area()
+            # print(" overlap of rect1 ", rect1.bottom_left_point.coordinates, " ", rect1.top_right_point.coordinates," and rect2 ", rect2.bottom_left_point.coordinates, " ", rect2.top_right_point.coordinates, " :", overlap)
+            # print("overall area: ", overall_area)
+
+            if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
+                min_overlap = overlap
+                min_area = overall_area
+                chosen_index = i
+
+    return entries[:chosen_index], entries[chosen_index:]
+
+
+def overflow_treatment(node, level_of_node, tree):
+    global overflow_treatment_level
+    if level_of_node == 0:
+        # split root
+        entry_group1, entry_group2 = split(node, Node.min_entries)
+        if isinstance(entry_group1[0], LeafEntry):
+            # print("split root by leaf")
+            new_leaf_node1 = Node(entry_group1)
+            new_leaf_node2 = Node(entry_group2)
+
+            rect1 = Rectangle([entry.point for entry in entry_group1])
+            root_entry1 = Entry(rect1, new_leaf_node1)
+            rect2 = Rectangle([entry.point for entry in entry_group2])
+            root_entry2 = Entry(rect2, new_leaf_node2)
+
+            new_root_node = Node([root_entry1, root_entry2])
+            new_leaf_node1.set_parent(new_root_node, 0)
+            new_leaf_node2.set_parent(new_root_node, 1)
+            tree.remove(node)
+            tree.insert(0, new_root_node)
+            tree.insert(1, new_leaf_node1)
+            tree.insert(2, new_leaf_node2)
+        else:
+            # print("split root by internal")
+            new_node1 = Node(entry_group1)
+            new_node2 = Node(entry_group2)
+
+            rect1_points = []
+            for entry in entry_group1:
+                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect1_points.append(entry.rectangle.top_right_point.coordinates)
+            rect1 = Rectangle(rect1_points)
+            root_entry1 = Entry(rect1, new_node1)
+
+            rect2_points = []
+            for entry in entry_group2:
+                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect2_points.append(entry.rectangle.top_right_point.coordinates)
+            rect2 = Rectangle(rect2_points)
+            root_entry2 = Entry(rect2, new_node2)
+
+            new_root_node = Node([root_entry1, root_entry2])
+            new_node1.set_parent(new_root_node, 0)
+            new_node2.set_parent(new_root_node, 1)
+
+            for i, entry in enumerate(new_node1.entries):
+                entry.child_node.set_parent(new_node1, i)
+            for i, entry in enumerate(new_node2.entries):
+                entry.child_node.set_parent(new_node2, i)
+
+            tree.remove(node)
+            tree.insert(0, new_root_node)  # root always stays at the head of the list
+            tree.insert(1, new_node1)
+            tree.insert(2, new_node2)
+
+    elif level_of_node == overflow_treatment_level:
+        # reinsert
+        # print("reinsert")
+        overflow_treatment_level += 1
+        reinsert(tree, node)
+    else:
+        # split node
+        entry_group1, entry_group2 = split(node, Node.min_entries)
+        if isinstance(entry_group1[0], LeafEntry):
+            # split leaf node
+            new_leaf_node1 = Node(entry_group1)
+            new_leaf_node2 = Node(entry_group2)
+
+            rect1 = Rectangle([entry.point for entry in entry_group1])
+            internal_entry1 = Entry(rect1, new_leaf_node1)
+            rect2 = Rectangle([entry.point for entry in entry_group2])
+            internal_entry2 = Entry(rect2, new_leaf_node2)
+
+            node.parent.entries = node.parent.entries[:node.slot_in_parent] + [internal_entry1, internal_entry2] + node.parent.entries[node.slot_in_parent + 1:]
+
+            new_leaf_node1.set_parent(node.parent, node.parent.entries.index(internal_entry1))
+            new_leaf_node2.set_parent(node.parent, node.parent.entries.index(internal_entry2))
+
+            # replace the old node with the new ones
+            index_to_replace = tree.index(node)
+            # tree = tree[:index_to_replace] + [new_leaf_node1, new_leaf_node2] + tree[index_to_replace + 1:]
+            tree.insert(index_to_replace, new_leaf_node1)
+            tree.insert(index_to_replace + 1, new_leaf_node2)
+            tree.remove(node)
+
+            # print("length of tree:", len(tree))
+            # for k, entr in enumerate(node.parent.entries):
+            #     print("rect", k, ": ", entr.rectangle.bottom_left_point.coordinates, " ", entr.rectangle.top_right_point.coordinates)
+
+            if len(node.parent.entries) > Node.max_entries:
+                overflow_treatment(new_leaf_node1.parent, level_of_node-1, tree)
+            else:
+                adjust_rectangles(new_leaf_node1.parent)
+        else:
+            # split internal node
+            new_node1 = Node(entry_group1)
+            new_node2 = Node(entry_group2)
+
+            rect1_points = []
+            for entry in entry_group1:
+                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect1_points.append(entry.rectangle.top_right_point.coordinates)
+            rect1 = Rectangle(rect1_points)
+            internal_entry1 = Entry(rect1, new_node1)
+
+            rect2_points = []
+            for entry in entry_group2:
+                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect2_points.append(entry.rectangle.top_right_point.coordinates)
+            rect2 = Rectangle(rect2_points)
+            internal_entry2 = Entry(rect2, new_node2)
+
+            node.parent.entries = node.parent.entries[:node.slot_in_parent] + [internal_entry1, internal_entry2] + node.parent.entries[node.slot_in_parent + 1:]
+
+            new_node1.set_parent(node.parent, node.parent.entries.index(internal_entry1))
+            new_node2.set_parent(node.parent, node.parent.entries.index(internal_entry2))
+
+            for i, entry in enumerate(new_node1.entries):
+                entry.child_node.set_parent(new_node1, i)
+            for i, entry in enumerate(new_node2.entries):
+                entry.child_node.set_parent(new_node2, i)
+
+            # replace the old node with the new ones
+            index_to_replace = tree.index(node)
+            # tree = tree[:index_to_replace] + [new_node1, new_node2] + tree[index_to_replace + 1:]
+            tree.insert(index_to_replace, new_node1)
+            tree.insert(index_to_replace + 1, new_node2)
+            tree.remove(node)
+
+            # print(" Internal node split")
+            # for k, entr in enumerate(node.parent.entries):
+            #     print("rect", k, ": ", entr.rectangle.bottom_left_point.coordinates, " ", entr.rectangle.top_right_point.coordinates)
+
+            if len(node.parent.entries) > Node.max_entries:
+                overflow_treatment(new_node1.parent, level_of_node - 1, tree)
+            else:
+                adjust_rectangles(new_node1.parent)
+            #  something is sus
+
+
+def reinsert(tree, leaf_node):
+    new_rectangle = Rectangle([entry.point for entry in leaf_node.entries])
+    sorted_entries = sorted(leaf_node.entries, key=lambda entry: new_rectangle.euclidean_distance(entry.point))
+    p = int(round(0.3 * Node.max_entries))
+    for i in range(p):  # Remove the first p entries from N
+        leaf_node.entries.remove(sorted_entries[i])
+    adjust_rectangles(leaf_node)  # Adjust the bounding rectangle of N
+    for i in range(p):
+        insert_entry_to_tree(tree, sorted_entries[i])
+
+
+def adjust_rectangles(node):
+    if node.parent is not None:
+        if isinstance(node.entries[0], LeafEntry):
+            new_points = []
+            for leaf_entry in node.entries:
+                new_points.append(leaf_entry.point)
+            node.parent.entries[node.slot_in_parent].set_rectangle(new_points)
+        else:
+            new_points = []
+            for entry in node.entries:
+                new_points.append(entry.rectangle.bottom_left_point.coordinates)
+                new_points.append(entry.rectangle.top_right_point.coordinates)
+            node.parent.entries[node.slot_in_parent].set_rectangle(new_points)
+        adjust_rectangles(node.parent)
+
+
+def insert_entry_to_tree(tree, leaf_entry):
+    N = choose_subtree(leaf_entry, tree)  # N is a leaf_node
+    # leaf_level = find_node_level(N)
+    leaf_level = N.find_node_level()  # level of N is leaf_level
+    if len(N.entries) < Node.max_entries:
+        N.entries.append(leaf_entry)
+        adjust_rectangles(N)
+    elif len(N.entries) == Node.max_entries:
+        N.entries.append(leaf_entry)
+        overflow_treatment(N, leaf_level, tree)
+
 def compute_hilbert_value(point, dimensions):
     p = 10
     hilbert_curve = HilbertCurve(p, dimensions)
     return hilbert_curve.distance_from_point(point)
-
-
-def compute_mbr_centroid(mbr):
-    """Compute centroid for an MBR."""
-    x_avg = (mbr.bottom_left_point.coordinates[0] + mbr.top_right_point.coordinates[0]) / 2
-    y_avg = (mbr.bottom_left_point.coordinates[1] + mbr.top_right_point.coordinates[1]) / 2
-    return [x_avg, y_avg]
-
-
-def bulk_load_higher_level_nodes(lower_level_nodes, max_entries):
-    """Bulk load higher-level nodes."""
-    # Sort nodes based on the Hilbert value of their MBR's centroid
-    sorted_nodes = sorted(lower_level_nodes, key=lambda x: compute_hilbert_value(compute_mbr_centroid(x.mbr)))
-    for node in sorted_nodes:
-        print(node.mbr)
-    higher_level_nodes = []
-
-    # Create higher-level nodes based on max_entries
-    while sorted_nodes:
-        nodes_for_higher_level_node = sorted_nodes[:max_entries]
-        mbrs = [node.mbr for node in nodes_for_higher_level_node]
-
-        points = []
-        for mbr in mbrs:
-            points.extend([mbr.bottom_left_point.coordinates, mbr.top_right_point.coordinates])
-
-        combined_mbr = Rectangle(points)
-
-        new_node = Node(entries=nodes_for_higher_level_node)
-        new_node.mbr = combined_mbr
-        higher_level_nodes.append(new_node)
-
-        # Remove the nodes now included in a higher-level node
-        sorted_nodes = sorted_nodes[max_entries:]
-
-    return higher_level_nodes
-
-
-def print_tree(node, level=1, indent="  "):
-    """Prints the tree starting from the given node in a structured format."""
-    if node is None:
-        return
-
-    # Print current node's MBR
-    print(indent * level + f"Level {level} - Node MBR: {node.mbr}")
-
-    # If the entries of the node are other nodes (i.e., non-leaf nodes),
-    # recursively print those nodes.
-    if node.entries and isinstance(node.entries[0], Node):
-        for child_node in node.entries:
-            # For non-leaf nodes, print the MBR of each child node
-            print(indent * (level + 1) + f"Contained Rectangle: {child_node.mbr}")
-            print_tree(child_node, level + 1)
-
-    # If the entries of the node are LeafEntry (i.e., leaf nodes),
-    # print the leaf node data.
-    elif node.entries and isinstance(node.entries[0], LeafEntry):
-        for leaf in node.entries:
-            print(indent * (level + 1) + f"Point: {leaf.point}")
 
 
 def read_block_data(csv_reader, block_id):
@@ -88,7 +353,7 @@ def read_block_data(csv_reader, block_id):
     return block_data
 
 
-input_file = "datafile.csv"
+input_file = "datafile2.csv"
 
 with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     csv_reader = csv.reader(csv_file)
@@ -126,7 +391,10 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     # Creating Nodes (which will act as LeafNodes in this context) based on max_entries
     leaf_nodes = []
     current_entries = []
-    Node.set_max_entries(max_entries)
+    Node.set_max_entries(round(0.7 * max_entries))
+    entries_to_be_inserted = []
+    print(Node.max_entries)
+    print(Node.min_entries)
     for entry in leaf_entries_sorted_by_hilbert:
         if len(current_entries) < Node.max_entries:
             current_entries.append(entry)
@@ -135,20 +403,26 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
             leaf_nodes.append(Node(current_entries))
             current_entries = [entry]
 
-    # Don't forget the last set of entries if they exist
-    if current_entries:
+    # At the end of loop, check the number of entries in current_entries
+    if len(current_entries) >= Node.min_entries:
+        # If they are more than the minimum, create a new Node
         leaf_nodes.append(Node(current_entries))
+    else:
+        # If less than minimum, append them to entries_to_be_inserted
+        entries_to_be_inserted.extend(current_entries)
+
+    print("++++++++++++")
+
+    # Print details of entries_to_be_inserted
+    print("Entries to be Inserted:")
+    for leaf_entry in entries_to_be_inserted:
+        print(f"Record ID: {leaf_entry.record_id}, Point: {leaf_entry.point}")
+    print("++++++++++++")
 
     # Now, 'leaf_nodes' is a list containing all your Nodes acting as leaf nodes with entries up to max_entries.
 
     print(f"Created {len(leaf_nodes)} leaf nodes.")
 
-    for i, node in enumerate(leaf_nodes):
-        print(f"Node {i + 1}:")
-        print(node)  # Using the __str__ method
-        for entry in node.entries:
-            print(f" - Record ID: {entry.record_id}, Point: {entry.point}")
-        print("------")
 
     # 1. Calculate MBR for each leaf node
     for node in leaf_nodes:
@@ -170,21 +444,164 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
             current_entry_list.append(entry)
         else:
             # Once we hit the max, we create a new Node and start a new list of entries
-            internal_nodes.append(Node(current_entry_list))
+            new_node = Node(current_entry_list)
+            internal_nodes.append(new_node)
+            # Set the parent for the child nodes
+            for ent in current_entry_list:
+                ent.child_node.set_parent(new_node, current_entry_list.index(ent))
             current_entry_list = [entry]
 
     # Don't forget the last set of entries if they exist
     if current_entry_list:
-        internal_nodes.append(Node(current_entry_list))
+        new_node = Node(current_entry_list)
+        internal_nodes.append(new_node)
+        # Set the parent for the child nodes
+        for ent in current_entry_list:
+            ent.child_node.set_parent(new_node, current_entry_list.index(ent))
 
     # Printing the created nodes with their entries
     print(f"Created {len(internal_nodes)} internal nodes.")
-    for i, node in enumerate(internal_nodes):
-        print(f"Node {i + 1}:")
-        for entry in node.entries:
-            print(f" - MBR: {entry.rectangle}, Child Node: {entry.child_node}")
-        print("------")
 
+    # If only one internal node is created, set it as root
+    if len(internal_nodes) == 1:
+        root = internal_nodes[0]
+        tree = [root]
+        for node in leaf_nodes:
+            tree.append(node)
+        for i, node in enumerate(tree):
+            print("node", i, "level=", node.find_node_level())
+            for j, entry in enumerate(node.entries):
+                if isinstance(entry, LeafEntry):
+                    print("       leaf_entry", j, ":", entry.point)
+                else:
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
+
+        overflow_treatment_level = tree[-1].find_node_level()
+        for leaf_entry in entries_to_be_inserted:
+            insert_entry_to_tree(tree, leaf_entry)
+        print("---------------------------------------")
+        for i, node in enumerate(tree):
+            print("node", i, "level=", node.find_node_level())
+            for j, entry in enumerate(node.entries):
+                if isinstance(entry, LeafEntry):
+                    print("       leaf_entry", j, ":", entry.point)
+                else:
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
+
+        print("The single internal node has been set as the root.")
+    else:
+        tree1 = []
+        for node in internal_nodes:
+            tree1.append(node)
+        for node in leaf_nodes:
+            tree1.append(node)
+        for i, node in enumerate(tree1):
+            print("node", i, "level=", node.find_node_level())
+            for j, entry in enumerate(node.entries):
+                if isinstance(entry, LeafEntry):
+                    print("       leaf_entry", j, ":", entry.point)
+                else:
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
+        print("---------------------------")
+        # If the last internal node has entries less than the minimum required
+        if len(internal_nodes[-1].entries) < Node.min_entries:
+            # Retrieve the child nodes of this internal node
+            child_nodes = [entry.child_node for entry in internal_nodes[-1].entries]
+
+            # Retrieve the leaf entries from these child nodes and append them to `entries_to_be_inserted`
+            for child in child_nodes:
+                entries_to_be_inserted.extend(child.entries)
+
+            # Remove this last internal node
+            internal_nodes = internal_nodes[:-1]
+
+        # Group the internal nodes to create upper-level nodes
+        upper_level_nodes = internal_nodes
+        while len(upper_level_nodes) > 1:
+            next_level_nodes = []
+
+            # Group the nodes based on max_entries
+            group = []
+            for node in upper_level_nodes:
+                if len(group) < Node.max_entries:
+                    group.append(node)
+                else:
+                    # Form a new internal node with the group
+                    mbr = Rectangle(
+                        [entry.mbr.bottom_left_point for entry in group] + [entry.mbr.top_right_point for entry in
+                                                                            group])  # calculate MBR
+                    new_internal = Node([Entry(mbr, node) for node in group])
+                    next_level_nodes.append(new_internal)
+
+                    # Set the parent for the child nodes
+                    for i, entry in enumerate(new_internal.entries):
+                        entry.child_node.set_parent(new_internal, i)
+
+                    group = [node]
+
+            # Handle the remaining group, if any
+            if group:
+                mbr = Rectangle(
+                    [entry.mbr.bottom_left_point for entry in group] + [entry.mbr.top_right_point for entry in
+                                                                        group])  # calculate MBR
+                new_internal = Node([Entry(mbr, node) for node in group])
+                next_level_nodes.append(new_internal)
+
+                # Set the parent for the child nodes
+                for i, entry in enumerate(new_internal.entries):
+                    entry.child_node.set_parent(new_internal, i)
+
+            # Set the next_level_nodes as the upper_level_nodes for the next iteration
+            upper_level_nodes = next_level_nodes
+
+        tree1 = []
+        for node in internal_nodes:
+            tree1.append(node)
+        for node in leaf_nodes:
+            tree1.append(node)
+        for i, node in enumerate(tree1):
+            print("node", i, "level=", node.find_node_level())
+            for j, entry in enumerate(node.entries):
+                if isinstance(entry, LeafEntry):
+                    print("       leaf_entry", j, ":", entry.point)
+                else:
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
+
+        # The last upper node becomes the root
+        root = upper_level_nodes[0]
+
+        # Construct the tree in the desired format
+        tree = [root]
+        tree.extend(internal_nodes)
+        tree.extend(leaf_nodes)
+        print("Entries to be Inserted:")
+        for leaf_entry in entries_to_be_inserted:
+            print(f"Record ID: {leaf_entry.record_id}, Point: {leaf_entry.point}")
+        print("++++++++++++")
+
+        # Insert the leaf entries from the node that was not included in the tree
+        overflow_treatment_level = tree[-1].find_node_level()
+        for leaf_entry in entries_to_be_inserted:
+            insert_entry_to_tree(tree, leaf_entry)
+        print("---------------")
+        for i, node in enumerate(tree):
+            print("node", i, "level=", node.find_node_level())
+            for j, entry in enumerate(node.entries):
+                if isinstance(entry, LeafEntry):
+                    print("       leaf_entry", j, ":", entry.point)
+                else:
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
+
+        print("Done")
+
+
+    print(Node.max_entries)
+    print(Node.min_entries)
     '''
     # You already have the leaf nodes
     current_level_nodes = leaf_nodes
@@ -198,7 +615,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
 
     # The root node
     root = all_levels[-1][0]
-    
+
     # Print nodes at each level
     for level, nodes in enumerate(all_levels, start=1):
         print(f"Level {level} Nodes:")
@@ -207,5 +624,5 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
 
     print(max_entries)
     print_tree(root)
-    
+
 '''
