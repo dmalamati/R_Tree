@@ -336,6 +336,28 @@ def compute_hilbert_value(point, dimensions):
     return hilbert_curve.distance_from_point(point)
 
 
+def gather_leaf_nodes_from_node(node):
+    """Recursively gather all leaf nodes descending from a given node."""
+    if not node.entries or isinstance(node.entries[0], LeafEntry):
+        return [node]
+
+    leaf_nodes = []
+    for entry in node.entries:
+        leaf_nodes.extend(gather_leaf_nodes_from_node(entry.child_node))
+    return leaf_nodes
+
+def gather_leaf_entries_from_node(node):
+    """
+    Recursively traverse from an internal node to its leaf nodes,
+    collecting leaf entries along the way.
+    """
+    if isinstance(node.entries[0], LeafEntry):
+        return node.entries
+    else:
+        leaf_entries = []
+        for entry in node.entries:
+            leaf_entries.extend(gather_leaf_entries_from_node(entry.child_node))
+        return leaf_entries
 def read_block_data(csv_reader, block_id):
     block_data = []
 
@@ -507,13 +529,19 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                           entry.rectangle.top_right_point.coordinates)
         print("---------------------------")
         # If the last internal node has entries less than the minimum required
+        # Check if the last internal node has fewer entries than the minimum
         if len(internal_nodes[-1].entries) < Node.min_entries:
-            # Retrieve the child nodes of this internal node
-            child_nodes = [entry.child_node for entry in internal_nodes[-1].entries]
+            # Retrieve the leaf entries from the internal node and append them to `entries_to_be_inserted`
+            leaf_entries_from_last_node = gather_leaf_entries_from_node(internal_nodes[-1])
+            entries_to_be_inserted.extend(leaf_entries_from_last_node)
 
-            # Retrieve the leaf entries from these child nodes and append them to `entries_to_be_inserted`
-            for child in child_nodes:
-                entries_to_be_inserted.extend(child.entries)
+            # Gather the leaf nodes of the last internal node
+            leaf_nodes_from_last_node = gather_leaf_nodes_from_node(internal_nodes[-1])
+
+            # Remove these leaf nodes from leaf_nodes
+            for leaf_node in leaf_nodes_from_last_node:
+                if leaf_node in leaf_nodes:
+                    leaf_nodes.remove(leaf_node)
 
             # Remove this last internal node
             internal_nodes = internal_nodes[:-1]
@@ -531,8 +559,9 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 else:
                     # Form a new internal node with the group
                     mbr = Rectangle(
-                        [entry.mbr.bottom_left_point for entry in group] + [entry.mbr.top_right_point for entry in
-                                                                            group])  # calculate MBR
+                        [entry.mbr.bottom_left_point for entry in group] +
+                        [entry.mbr.top_right_point for entry in group]
+                    )  # calculate MBR
                     new_internal = Node([Entry(mbr, node) for node in group])
                     next_level_nodes.append(new_internal)
 
@@ -545,8 +574,9 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
             # Handle the remaining group, if any
             if group:
                 mbr = Rectangle(
-                    [entry.mbr.bottom_left_point for entry in group] + [entry.mbr.top_right_point for entry in
-                                                                        group])  # calculate MBR
+                    [entry.mbr.bottom_left_point for entry in group] +
+                    [entry.mbr.top_right_point for entry in group]
+                )  # calculate MBR
                 new_internal = Node([Entry(mbr, node) for node in group])
                 next_level_nodes.append(new_internal)
 
@@ -557,12 +587,13 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
             # Set the next_level_nodes as the upper_level_nodes for the next iteration
             upper_level_nodes = next_level_nodes
 
-        tree1 = []
-        for node in internal_nodes:
-            tree1.append(node)
-        for node in leaf_nodes:
-            tree1.append(node)
-        for i, node in enumerate(tree1):
+        # If there's only one node left, consider it as the root
+        if len(upper_level_nodes) == 1:
+            root = upper_level_nodes[0]
+
+        tree = [root] + [node for node in upper_level_nodes if node != root] + leaf_nodes
+
+        for i, node in enumerate(tree):
             print("node", i, "level=", node.find_node_level())
             for j, entry in enumerate(node.entries):
                 if isinstance(entry, LeafEntry):
@@ -571,13 +602,6 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                     print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
                           entry.rectangle.top_right_point.coordinates)
 
-        # The last upper node becomes the root
-        root = upper_level_nodes[0]
-
-        # Construct the tree in the desired format
-        tree = [root]
-        tree.extend(internal_nodes)
-        tree.extend(leaf_nodes)
         print("Entries to be Inserted:")
         for leaf_entry in entries_to_be_inserted:
             print(f"Record ID: {leaf_entry.record_id}, Point: {leaf_entry.point}")
