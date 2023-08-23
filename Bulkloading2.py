@@ -400,9 +400,10 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         for point_data in block:
             block_id = point_data[0]
             slot = point_data[1]
-            lat = point_data[2]
-            long = point_data[3]
-            record = [block_id, slot, lat, long]
+            coordinates = point_data[2:]
+            record = [block_id, slot]
+            for x in coordinates:
+                record.append(x)
             leaf_entry = LeafEntry(record)
             leaf_entries.append(leaf_entry)
 
@@ -500,6 +501,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                           entry.rectangle.top_right_point.coordinates)
 
         overflow_treatment_level = tree[-1].find_node_level()
+        Node.set_max_entries(max_entries)
         for leaf_entry in entries_to_be_inserted:
             insert_entry_to_tree(tree, leaf_entry)
         print("---------------------------------------")
@@ -609,6 +611,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
 
         # Insert the leaf entries from the node that was not included in the tree
         overflow_treatment_level = tree[-1].find_node_level()
+        Node.set_max_entries(max_entries)
         for leaf_entry in entries_to_be_inserted:
             insert_entry_to_tree(tree, leaf_entry)
         print("---------------")
