@@ -39,8 +39,6 @@ def choose_subtree(new_leaf_entry, tree):
             for i, entry in enumerate(N.entries):  # for every entry in N where N a node whose child is a leaf
                 overlap_enlargement = entry.rectangle.calculate_overlap_enlargement(new_leaf_entry, i, N)
                 area_enlargement = entry.rectangle.calculate_area_enlargement(new_leaf_entry)
-                # print("overlap: ", overlap_enlargement)
-                # print("area: ", area_enlargement)
 
                 if overlap_enlargement < min_overlap_cost or (overlap_enlargement == min_overlap_cost and area_enlargement < min_area_cost):
                     min_overlap_cost = overlap_enlargement
@@ -54,8 +52,6 @@ def choose_subtree(new_leaf_entry, tree):
             for entry in N.entries:  # for every entry in N where N a node whose child is not a leaf
                 area_enlargement = entry.rectangle.calculate_area_enlargement(new_leaf_entry)
                 new_area = entry.rectangle.calculate_area() + area_enlargement
-                # print("area enlargement: ", area_enlargement)
-                # print("new area: ", new_area)
 
                 if area_enlargement < min_area_cost or (area_enlargement == min_area_cost and new_area < min_area):
                     min_area_cost = area_enlargement
@@ -64,7 +60,7 @@ def choose_subtree(new_leaf_entry, tree):
 
         N = chosen_entry.child_node
 
-    return N  # the most suitable leaf node for the new leaf_entry
+    return N  # the most suitable leaf node for the new leaf_entry to be inserted
 
 
 def split(node, min_entries):
@@ -116,8 +112,6 @@ def choose_split_axis(entries, min_entries):
                 min_sum_margin = sum_margin
                 chosen_axis = axis
 
-            # entries.sort(key=lambda entry: entry.rectangle.top_right_point.coordinates[axis])
-
     return chosen_axis
 
 
@@ -132,8 +126,7 @@ def choose_split_index(entries, split_axis, min_entries):
             rect2 = Rectangle([entry.point for entry in entries[i:]])
             overlap = rect1.calculate_overlap_value(rect2)
             overall_area = rect1.calculate_area() + rect2.calculate_area()
-            # print(" overlap of rect1 ", rect1.bottom_left_point.coordinates, " ", rect1.top_right_point.coordinates," and rect2 ", rect2.bottom_left_point.coordinates, " ", rect2.top_right_point.coordinates, " :", overlap)
-            # print("overall area: ", overall_area)
+
             if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
                 min_overlap = overlap
                 min_area = overall_area
@@ -160,8 +153,6 @@ def choose_split_index(entries, split_axis, min_entries):
 
             overlap = rect1.calculate_overlap_value(rect2)
             overall_area = rect1.calculate_area() + rect2.calculate_area()
-            # print(" overlap of rect1 ", rect1.bottom_left_point.coordinates, " ", rect1.top_right_point.coordinates," and rect2 ", rect2.bottom_left_point.coordinates, " ", rect2.top_right_point.coordinates, " :", overlap)
-            # print("overall area: ", overall_area)
 
             if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
                 min_overlap = overlap
@@ -177,7 +168,7 @@ def overflow_treatment(node, level_of_node, tree):
         # split root
         entry_group1, entry_group2 = split(node, Node.min_entries)
         if isinstance(entry_group1[0], LeafEntry):
-            # print("split root by leaf")
+            # print("split leaf root")
             new_leaf_node1 = Node(entry_group1)
             new_leaf_node2 = Node(entry_group2)
 
@@ -194,7 +185,7 @@ def overflow_treatment(node, level_of_node, tree):
             tree.insert(1, new_leaf_node1)
             tree.insert(2, new_leaf_node2)
         else:
-            # print("split root by internal")
+            # print("split internal root")
             new_node1 = Node(entry_group1)
             new_node2 = Node(entry_group2)
 
@@ -236,6 +227,7 @@ def overflow_treatment(node, level_of_node, tree):
         entry_group1, entry_group2 = split(node, Node.min_entries)
         if isinstance(entry_group1[0], LeafEntry):
             # split leaf node
+            # print("split leaf node")
             new_leaf_node1 = Node(entry_group1)
             new_leaf_node2 = Node(entry_group2)
 
@@ -244,28 +236,29 @@ def overflow_treatment(node, level_of_node, tree):
             rect2 = Rectangle([entry.point for entry in entry_group2])
             internal_entry2 = Entry(rect2, new_leaf_node2)
 
-            node.parent.entries = node.parent.entries[:node.slot_in_parent] + [internal_entry1, internal_entry2] + node.parent.entries[node.slot_in_parent + 1:]
+            node.parent.entries.remove(node.parent.entries[node.slot_in_parent])
+            node.parent.entries.insert(node.slot_in_parent, internal_entry1)
+            node.parent.entries.insert(node.slot_in_parent + 1, internal_entry2)
 
             new_leaf_node1.set_parent(node.parent, node.parent.entries.index(internal_entry1))
             new_leaf_node2.set_parent(node.parent, node.parent.entries.index(internal_entry2))
 
+            for i, entry in enumerate(node.parent.entries):
+                entry.child_node.set_slot_in_parent(i)
+
             # replace the old node with the new ones
             index_to_replace = tree.index(node)
-            # tree = tree[:index_to_replace] + [new_leaf_node1, new_leaf_node2] + tree[index_to_replace + 1:]
             tree.insert(index_to_replace, new_leaf_node1)
             tree.insert(index_to_replace + 1, new_leaf_node2)
             tree.remove(node)
 
-            # print("length of tree:", len(tree))
-            # for k, entr in enumerate(node.parent.entries):
-            #     print("rect", k, ": ", entr.rectangle.bottom_left_point.coordinates, " ", entr.rectangle.top_right_point.coordinates)
-
             if len(node.parent.entries) > Node.max_entries:
-                overflow_treatment(new_leaf_node1.parent, level_of_node-1, tree)
+                overflow_treatment(node.parent, level_of_node-1, tree)
             else:
-                adjust_rectangles(new_leaf_node1.parent)
+                adjust_rectangles(node.parent)
         else:
             # split internal node
+            # print("split internal node")
             new_node1 = Node(entry_group1)
             new_node2 = Node(entry_group2)
 
@@ -283,32 +276,32 @@ def overflow_treatment(node, level_of_node, tree):
             rect2 = Rectangle(rect2_points)
             internal_entry2 = Entry(rect2, new_node2)
 
-            node.parent.entries = node.parent.entries[:node.slot_in_parent] + [internal_entry1, internal_entry2] + node.parent.entries[node.slot_in_parent + 1:]
+            node.parent.entries.remove(node.parent.entries[node.slot_in_parent])
+            node.parent.entries.insert(node.slot_in_parent, internal_entry1)
+            node.parent.entries.insert(node.slot_in_parent + 1, internal_entry2)
 
             new_node1.set_parent(node.parent, node.parent.entries.index(internal_entry1))
             new_node2.set_parent(node.parent, node.parent.entries.index(internal_entry2))
 
+            # update slot_in_parent for all children of the parent node that was expanded
+            for i, entry in enumerate(node.parent.entries):
+                entry.child_node.set_slot_in_parent(i)
+            # update slot_in_parent for all children of the new nodes
             for i, entry in enumerate(new_node1.entries):
                 entry.child_node.set_parent(new_node1, i)
             for i, entry in enumerate(new_node2.entries):
                 entry.child_node.set_parent(new_node2, i)
 
-            # replace the old node with the new ones
+            # replace the old node with the new ones in the tree list
             index_to_replace = tree.index(node)
-            # tree = tree[:index_to_replace] + [new_node1, new_node2] + tree[index_to_replace + 1:]
             tree.insert(index_to_replace, new_node1)
             tree.insert(index_to_replace + 1, new_node2)
             tree.remove(node)
-
-            # print(" Internal node split")
-            # for k, entr in enumerate(node.parent.entries):
-            #     print("rect", k, ": ", entr.rectangle.bottom_left_point.coordinates, " ", entr.rectangle.top_right_point.coordinates)
 
             if len(node.parent.entries) > Node.max_entries:
                 overflow_treatment(new_node1.parent, level_of_node - 1, tree)
             else:
                 adjust_rectangles(new_node1.parent)
-            #  something is sus
 
 
 def reinsert(tree, leaf_node):
@@ -340,7 +333,7 @@ def adjust_rectangles(node):
 
 def insert_entry_to_tree(tree, leaf_entry):
     N = choose_subtree(leaf_entry, tree)  # N is a leaf_node
-    # leaf_level = find_node_level(N)
+
     leaf_level = N.find_node_level()  # level of N is leaf_level
     if len(N.entries) < Node.max_entries:
         N.entries.append(leaf_entry)
@@ -350,7 +343,6 @@ def insert_entry_to_tree(tree, leaf_entry):
         overflow_treatment(N, leaf_level, tree)
 
 
-# Read data from the CSV file
 def insert_one_by_one(max_entries, blocks):
     global overflow_treatment_level
     overflow_treatment_level = 1
@@ -358,12 +350,13 @@ def insert_one_by_one(max_entries, blocks):
     root = Node()
     Node.set_max_entries(max_entries)
     tree.append(root)
-    for block in blocks:
-        for record in block:
+    for i, block in enumerate(blocks):
+        # print("block", i)
+        for j, record in enumerate(block):
             new_leaf_entry = LeafEntry(record)
             insert_entry_to_tree(tree, new_leaf_entry)
-    return tree
-    # return full tree
+
+    return tree  # return full tree
 
 
 with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
@@ -392,18 +385,24 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
         block_data = read_block_data(csv_reader, block_id)
         blocks.append(block_data)
 
+    # for block in blocks:
+    #     for data in block:
+    #         print(data[0], ": ", data[1], ", ", data[2], ", ", data[3])
+
     # για να κανεις insert πρεπει:
     # 1. set Node.set_max_entry_size(max_entry_size)
     # 2. set global overflow_treatment_level = tree[-1].find_node_level()
     # 3. use insert_entry_to_tree(tree, leaf_entry)
     max_entries = int(total_entries / total_blocks)
+
     print("max entries = ", max_entries)
     tree = insert_one_by_one(max_entries, blocks)
+    print("tree len = ", len(tree))
     for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level())
+        print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))
         for j, entry in enumerate(node.entries):
             if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.point)
+                print("       leaf_entry", j, ":", entry.record_id, entry.point)
             else:
                 print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
 

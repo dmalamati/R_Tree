@@ -132,11 +132,32 @@ class Rectangle:
         # print(overlap_value)
         return overlap_value
 
+    def overlaps_with_rectangle(self, other_rectangle):
+        for i in range(len(self.bottom_left_point.coordinates)):
+            if self.top_right_point.coordinates[i] < other_rectangle.bottom_left_point.coordinates[i] or \
+                    self.bottom_left_point.coordinates[i] > other_rectangle.top_right_point.coordinates[i]:
+                return False
+        return True
+
     def overlaps_with_point(self, point):
         for i in range(len(self.bottom_left_point.coordinates)):
             if not(self.bottom_left_point.coordinates[i] <= point[i] <= self.top_right_point.coordinates[i]):
                 return False
         return True
+
+    # RANGE QUERY IN RECTANGLE
+    def find_points_in_rectangle(self, root_node):
+        result = []
+        if isinstance(root_node.entries[0], Entry):
+            for entry in root_node.entries:
+                # if entry.rectangle.calculate_overlap_value(rectangle) > 0:
+                if self.overlaps_with_rectangle(entry.rectangle):
+                    result.extend(self.find_points_in_rectangle(entry.child_node))
+        else:
+            for leaf_entry in root_node.entries:
+                if self.overlaps_with_point(leaf_entry.point):
+                    result.append(leaf_entry)
+        return result
 
 
 # Example usage for 2D rectangle
