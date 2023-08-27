@@ -1,4 +1,5 @@
 import math
+import xml.etree.ElementTree as ET
 
 
 class Entry:
@@ -12,17 +13,45 @@ class Entry:
     def set_child_node(self, new_child_node):
         self.child_node = new_child_node
 
+    # def to_xml(self, parent):
+    #     entry_elem = ET.SubElement(parent, "Entry")
+    #     self.rectangle.to_xml(entry_elem)
+    #     child_node_id = id(self.child_node)
+    #     ET.SubElement(entry_elem, "ChildNodeID").text = str(child_node_id)
+
+    def to_xml(self, parent):
+        entry_elem = ET.SubElement(parent, "Entry")
+        self.rectangle.to_xml(entry_elem)
+        child_node_id = id(self.child_node)
+        ET.SubElement(entry_elem, "ChildNodeID").text = str(child_node_id)
+
 
 class LeafEntry:
     def __init__(self, record):
         self.record_id = (record[0], record[1])
         self.point = record[2:]
 
+    # def to_xml(self, parent):
+    #     leaf_entry_elem = ET.SubElement(parent, "LeafEntry")
+    #     ET.SubElement(leaf_entry_elem, "RecordID").text = str(self.record_id)
+    #     point_elem = ET.SubElement(leaf_entry_elem, "Point")
+    #     ET.SubElement(point_elem, "Coordinates").text = " ".join(map(str, self.point))
 
-class Point:
-    # coordinates is a list with the coordinates for one point
-    def __init__(self, coordinates):
-        self.coordinates = coordinates
+    def to_xml(self, parent):
+        leaf_entry_elem = ET.SubElement(parent, "LeafEntry")
+        record_id_elem = ET.SubElement(leaf_entry_elem, "RecordID")
+        record_id_elem.text = str(self.record_id[0]) + "," + str(self.record_id[1])
+        point_elem = ET.SubElement(leaf_entry_elem, "Point")
+        point_elem.text = " ".join(map(str, self.point))
+
+# class Point:
+#     # coordinates is a list with the coordinates for one point
+#     def __init__(self, coordinates):
+#         self = coordinates
+#
+#     def to_xml(self, parent):
+#         point_elem = ET.SubElement(parent, "Point")
+#         ET.SubElement(point_elem, "Coordinates").text = " ".join(map(str, self))
 
 
 class Rectangle:
@@ -40,16 +69,16 @@ class Rectangle:
                 self.bottom_left_point[i] = min(self.bottom_left_point[i], point[i])  # min of all dimensions
                 self.top_right_point[i] = max(self.top_right_point[i], point[i])  # max of all dimensions
 
-        self.bottom_left_point = Point(self.bottom_left_point)
-        self.top_right_point = Point(self.top_right_point)
+        # self.bottom_left_point = Point(self.bottom_left_point)
+        # self.top_right_point = Point(self.top_right_point)
 
     def center(self):
-        num_of_dimensions = len(self.bottom_left_point.coordinates)
+        num_of_dimensions = len(self.bottom_left_point)
         center_point = []
 
         for i in range(num_of_dimensions):
-            a = self.bottom_left_point.coordinates[i]
-            b = self.top_right_point.coordinates[i]
+            a = self.bottom_left_point[i]
+            b = self.top_right_point[i]
             center_point.append((a + b) / 2)
 
         return center_point
@@ -66,32 +95,32 @@ class Rectangle:
     def calculate_overlap_enlargement(self, new_leaf_entry, index, node):
         # Create a new rectangle using the existing corners and the new_leaf_entry's point
         new_rectangle_points = [
-            self.bottom_left_point.coordinates,
-            self.top_right_point.coordinates,
+            self.bottom_left_point,
+            self.top_right_point,
             new_leaf_entry.point
         ]
         new_rectangle = Rectangle(new_rectangle_points)
 
         # Calculate the overlap enlargement cost
         overlap_enlargement = 0
-        # number_of_dimensions = len(self.bottom_left_point.coordinates)
+        # number_of_dimensions = len(self.bottom_left_point)
 
         for i, entry in enumerate(node.entries):
             if i == index:
                 continue
             overlap_enlargement += entry.rectangle.calculate_overlap_value(new_rectangle)
-        # print(new_rectangle.bottom_left_point.coordinates, " ", new_rectangle.top_right_point.coordinates)
+        # print(new_rectangle.bottom_left_point, " ", new_rectangle.top_right_point)
 
         return overlap_enlargement
 
     def __str__(self):
-        return f"[[{self.bottom_left_point.coordinates[0]}, {self.bottom_left_point.coordinates[1]}], [{self.top_right_point.coordinates[0]}, {self.top_right_point.coordinates[1]}]]"
+        return f"[[{self.bottom_left_point[0]}, {self.bottom_left_point[1]}], [{self.top_right_point[0]}, {self.top_right_point[1]}]]"
 
     def calculate_area_enlargement(self, new_leaf_entry):
         # Create a new rectangle using the existing corners and the new_leaf_entry's point
         new_rectangle_points = [
-            self.bottom_left_point.coordinates,
-            self.top_right_point.coordinates,
+            self.bottom_left_point,
+            self.top_right_point,
             new_leaf_entry.point
         ]
         new_rectangle = Rectangle(new_rectangle_points)
@@ -105,26 +134,26 @@ class Rectangle:
         # Calculate the area of the current rectangle
         area = 1
 
-        for i in range(len(self.bottom_left_point.coordinates)):
-            area *= self.top_right_point.coordinates[i] - self.bottom_left_point.coordinates[i]
+        for i in range(len(self.bottom_left_point)):
+            area *= self.top_right_point[i] - self.bottom_left_point[i]
 
         return area
 
     def calculate_margin(self):
         margin = 0
 
-        for i in range(len(self.bottom_left_point.coordinates)):
-            margin += self.top_right_point.coordinates[i] - self.bottom_left_point.coordinates[i]
+        for i in range(len(self.bottom_left_point)):
+            margin += self.top_right_point[i] - self.bottom_left_point[i]
 
         return margin
 
     def calculate_overlap_value(self, other_rectangle):
         overlap_value = 1
 
-        for i in range(len(self.bottom_left_point.coordinates)):
-            overlap_extent = min(self.top_right_point.coordinates[i], other_rectangle.top_right_point.coordinates[i]) -\
-                             max(self.bottom_left_point.coordinates[i],
-                                 other_rectangle.bottom_left_point.coordinates[i])
+        for i in range(len(self.bottom_left_point)):
+            overlap_extent = min(self.top_right_point[i], other_rectangle.top_right_point[i]) -\
+                             max(self.bottom_left_point[i],
+                                 other_rectangle.bottom_left_point[i])
             if overlap_extent > 0:
                 overlap_value *= overlap_extent
             else:
@@ -133,15 +162,15 @@ class Rectangle:
         return overlap_value
 
     def overlaps_with_rectangle(self, other_rectangle):
-        for i in range(len(self.bottom_left_point.coordinates)):
-            if self.top_right_point.coordinates[i] < other_rectangle.bottom_left_point.coordinates[i] or \
-                    self.bottom_left_point.coordinates[i] > other_rectangle.top_right_point.coordinates[i]:
+        for i in range(len(self.bottom_left_point)):
+            if self.top_right_point[i] < other_rectangle.bottom_left_point[i] or \
+                    self.bottom_left_point[i] > other_rectangle.top_right_point[i]:
                 return False
         return True
 
     def overlaps_with_point(self, point):
-        for i in range(len(self.bottom_left_point.coordinates)):
-            if not(self.bottom_left_point.coordinates[i] <= point[i] <= self.top_right_point.coordinates[i]):
+        for i in range(len(self.bottom_left_point)):
+            if not(self.bottom_left_point[i] <= point[i] <= self.top_right_point[i]):
                 return False
         return True
 
@@ -159,12 +188,24 @@ class Rectangle:
                     result.append(leaf_entry)
         return result
 
+    # def to_xml(self, parent):
+    #     rectangle_elem = ET.SubElement(parent, "Rectangle")
+    #     self.bottom_left_point.to_xml(rectangle_elem)
+    #     self.top_right_point.to_xml(rectangle_elem)
+
+    def to_xml(self, parent):
+        rectangle_elem = ET.SubElement(parent, "Rectangle")
+        bottom_left_point_elem = ET.SubElement(rectangle_elem, "BottomLeftPoint")
+        top_right_point_elem = ET.SubElement(rectangle_elem, "TopRightPoint")
+        bottom_left_point_elem.text = " ".join(map(str, self.bottom_left_point))
+        top_right_point_elem.text = " ".join(map(str, self.top_right_point))
+
 
 # Example usage for 2D rectangle
 # points_2d = [[1.0, 2.0], [2.0, 3.0], [0.0, 4.0]]
 # rectangle_2d = Rectangle(points_2d)
-# print("Bottom Left:", rectangle_2d.bottom_left_point.coordinates)
-# print("Top Right:", rectangle_2d.top_right_point.coordinates)
+# print("Bottom Left:", rectangle_2d.bottom_left_point)
+# print("Top Right:", rectangle_2d.top_right_point)
 # record = [0, 1, 5.0, 6.0]
 # new_leaf = LeafEntry(record)
 # area = rectangle_2d.calculate_area_enlargement(new_leaf)
@@ -172,8 +213,8 @@ class Rectangle:
 # enlarge = rectangle_2d.calculate_overlap_enlargement(new_leaf)
 # print(enlarge)
 
-# print("Bottom Left:", rectangle_2d.bottom_left_point.coordinates)
-# print("Top Right:", rectangle_2d.top_right_point.coordinates)
+# print("Bottom Left:", rectangle_2d.bottom_left_point)
+# print("Top Right:", rectangle_2d.top_right_point)
 
 # entry = [1, 0, 41.5163899, 26.5291294, 44.23, 56.322]
 # new = LeafEntry(entry)
@@ -201,5 +242,5 @@ class Rectangle:
 # leaf_entry15 = LeafEntry([1, 5, 4.0, 4.0])
 #
 # rectangle5 = Rectangle([leaf_entry13.point, leaf_entry14.point, leaf_entry15.point])
-# print(rectangle5.bottom_left_point.coordinates, " ", rectangle5.top_right_point.coordinates)
+# print(rectangle5.bottom_left_point, " ", rectangle5.top_right_point)
 # print(rectangle5.overlaps_with_point([4.0, 0.0001]))

@@ -1,5 +1,5 @@
 import csv
-from Entry import Entry, LeafEntry, Rectangle, Point
+from Entry import Entry, LeafEntry, Rectangle
 from Node import Node
 
 input_file = "datafile.csv"
@@ -88,21 +88,21 @@ def choose_split_axis(entries, min_entries):
                 chosen_axis = axis
     else:
         # print(" in for not leaf")
-        for axis in range(len(entries[0].rectangle.bottom_left_point.coordinates)):
-            entries.sort(key=lambda entry: entry.rectangle.bottom_left_point.coordinates[axis])
+        for axis in range(len(entries[0].rectangle.bottom_left_point)):
+            entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[axis])
 
             sum_margin = 0
             for i in range(min_entries, len(entries) - min_entries + 1):
                 rect1_points = []
                 for entry in entries[:i]:
-                    rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
-                    rect1_points.append(entry.rectangle.top_right_point.coordinates)
+                    rect1_points.append(entry.rectangle.bottom_left_point)
+                    rect1_points.append(entry.rectangle.top_right_point)
                 rect1 = Rectangle(rect1_points)
 
                 rect2_points = []
                 for entry in entries[i:]:
-                    rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
-                    rect2_points.append(entry.rectangle.top_right_point.coordinates)
+                    rect2_points.append(entry.rectangle.bottom_left_point)
+                    rect2_points.append(entry.rectangle.top_right_point)
                 rect2 = Rectangle(rect2_points)
 
                 sum_margin += rect1.calculate_margin() + rect2.calculate_margin()
@@ -131,7 +131,7 @@ def choose_split_index(entries, split_axis, min_entries):
                 min_area = overall_area
                 chosen_index = i
     else:
-        entries.sort(key=lambda entry: entry.rectangle.bottom_left_point.coordinates[split_axis])
+        entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[split_axis])
 
         min_overlap = float('inf')
         min_area = float('inf')
@@ -140,14 +140,14 @@ def choose_split_index(entries, split_axis, min_entries):
         for i in range(min_entries, len(entries) - min_entries + 1):
             rect1_points = []
             for entry in entries[:i]:
-                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
-                rect1_points.append(entry.rectangle.top_right_point.coordinates)
+                rect1_points.append(entry.rectangle.bottom_left_point)
+                rect1_points.append(entry.rectangle.top_right_point)
             rect1 = Rectangle(rect1_points)
 
             rect2_points = []
             for entry in entries[i:]:
-                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
-                rect2_points.append(entry.rectangle.top_right_point.coordinates)
+                rect2_points.append(entry.rectangle.bottom_left_point)
+                rect2_points.append(entry.rectangle.top_right_point)
             rect2 = Rectangle(rect2_points)
 
             overlap = rect1.calculate_overlap_value(rect2)
@@ -190,15 +190,15 @@ def overflow_treatment(node, level_of_node, tree):
 
             rect1_points = []
             for entry in entry_group1:
-                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
-                rect1_points.append(entry.rectangle.top_right_point.coordinates)
+                rect1_points.append(entry.rectangle.bottom_left_point)
+                rect1_points.append(entry.rectangle.top_right_point)
             rect1 = Rectangle(rect1_points)
             root_entry1 = Entry(rect1, new_node1)
 
             rect2_points = []
             for entry in entry_group2:
-                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
-                rect2_points.append(entry.rectangle.top_right_point.coordinates)
+                rect2_points.append(entry.rectangle.bottom_left_point)
+                rect2_points.append(entry.rectangle.top_right_point)
             rect2 = Rectangle(rect2_points)
             root_entry2 = Entry(rect2, new_node2)
 
@@ -263,15 +263,15 @@ def overflow_treatment(node, level_of_node, tree):
 
             rect1_points = []
             for entry in entry_group1:
-                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
-                rect1_points.append(entry.rectangle.top_right_point.coordinates)
+                rect1_points.append(entry.rectangle.bottom_left_point)
+                rect1_points.append(entry.rectangle.top_right_point)
             rect1 = Rectangle(rect1_points)
             internal_entry1 = Entry(rect1, new_node1)
 
             rect2_points = []
             for entry in entry_group2:
-                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
-                rect2_points.append(entry.rectangle.top_right_point.coordinates)
+                rect2_points.append(entry.rectangle.bottom_left_point)
+                rect2_points.append(entry.rectangle.top_right_point)
             rect2 = Rectangle(rect2_points)
             internal_entry2 = Entry(rect2, new_node2)
 
@@ -324,8 +324,8 @@ def adjust_rectangles(node):
         else:
             new_points = []
             for entry in node.entries:
-                new_points.append(entry.rectangle.bottom_left_point.coordinates)
-                new_points.append(entry.rectangle.top_right_point.coordinates)
+                new_points.append(entry.rectangle.bottom_left_point)
+                new_points.append(entry.rectangle.top_right_point)
             node.parent.entries[node.slot_in_parent].set_rectangle(new_points)
         adjust_rectangles(node.parent)
 
@@ -533,10 +533,10 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     internal_node2 = Node([entry4, entry5, entry6])
     internal_node3 = Node([entry7, entry8, entry9])
 
-    root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point.coordinates, entry1.rectangle.top_right_point.coordinates, entry2.rectangle.bottom_left_point.coordinates, entry2.rectangle.top_right_point.coordinates, entry3.rectangle.bottom_left_point.coordinates, entry3.rectangle.top_right_point.coordinates])
-    # root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point.coordinates, entry1.rectangle.top_right_point.coordinates, entry2.rectangle.bottom_left_point.coordinates, entry2.rectangle.top_right_point.coordinates])
-    root_rectangle2 = Rectangle([entry4.rectangle.bottom_left_point.coordinates, entry4.rectangle.top_right_point.coordinates, entry5.rectangle.bottom_left_point.coordinates, entry5.rectangle.top_right_point.coordinates, entry6.rectangle.bottom_left_point.coordinates, entry6.rectangle.top_right_point.coordinates])
-    root_rectangle3 = Rectangle([entry7.rectangle.bottom_left_point.coordinates, entry7.rectangle.top_right_point.coordinates, entry8.rectangle.bottom_left_point.coordinates, entry8.rectangle.top_right_point.coordinates, entry9.rectangle.bottom_left_point.coordinates, entry9.rectangle.top_right_point.coordinates])
+    root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point, entry1.rectangle.top_right_point, entry2.rectangle.bottom_left_point, entry2.rectangle.top_right_point, entry3.rectangle.bottom_left_point, entry3.rectangle.top_right_point])
+    # root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point, entry1.rectangle.top_right_point, entry2.rectangle.bottom_left_point, entry2.rectangle.top_right_point])
+    root_rectangle2 = Rectangle([entry4.rectangle.bottom_left_point, entry4.rectangle.top_right_point, entry5.rectangle.bottom_left_point, entry5.rectangle.top_right_point, entry6.rectangle.bottom_left_point, entry6.rectangle.top_right_point])
+    root_rectangle3 = Rectangle([entry7.rectangle.bottom_left_point, entry7.rectangle.top_right_point, entry8.rectangle.bottom_left_point, entry8.rectangle.top_right_point, entry9.rectangle.bottom_left_point, entry9.rectangle.top_right_point])
 
     root_entry1 = Entry(root_rectangle1, internal_node1)
     root_entry2 = Entry(root_rectangle2, internal_node2)
@@ -602,7 +602,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 print("     leaf_entry ", j, ": ", entry.point)
         else:
             for j, entry in enumerate(n.entries):
-                print("     entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
+                print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
 
     leaf_entry_to_find = LeafEntry([1, 1, 1.0, 2.0])
     delete_entry_from_tree(tree, leaf_entry_to_find)
@@ -614,7 +614,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     #             print("     leaf_entry ", j, ": ", entry.point)
     #     else:
     #         for j, entry in enumerate(n.entries):
-    #             print("     entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
+    #             print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
     #
     # print("new deletion:")
     leaf_entry_to_find = LeafEntry([1, 2, 1.0, 3.0])
@@ -631,7 +631,7 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 print("     leaf_entry ", j, ": ", entry.point)
         else:
             for j, entry in enumerate(n.entries):
-                print("     entry ", j, ": ", entry.rectangle.bottom_left_point.coordinates, " ", entry.rectangle.top_right_point.coordinates)
+                print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
 
 
 

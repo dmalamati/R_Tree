@@ -1,7 +1,7 @@
 import math
 from Entry import Entry, LeafEntry
 
-
+## na allakso to m se 40% tou M -> to leei kato apo to split sto paper ##
 class Node:
     max_entries = 4  # M
     min_entries = math.floor(max_entries/2.0)  # m

@@ -1,5 +1,5 @@
 import csv
-from Entry import Entry, LeafEntry, Rectangle, Point
+from Entry import Entry, LeafEntry, Rectangle
 from Node import Node
 
 
@@ -88,9 +88,9 @@ internal_node1 = Node([entry1, entry2, entry3])
 internal_node2 = Node([entry4, entry5, entry6])
 internal_node3 = Node([entry7, entry8, entry9])
 
-root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point.coordinates, entry1.rectangle.top_right_point.coordinates, entry2.rectangle.bottom_left_point.coordinates, entry2.rectangle.top_right_point.coordinates, entry3.rectangle.bottom_left_point.coordinates, entry3.rectangle.top_right_point.coordinates])
-root_rectangle2 = Rectangle([entry4.rectangle.bottom_left_point.coordinates, entry4.rectangle.top_right_point.coordinates, entry5.rectangle.bottom_left_point.coordinates, entry5.rectangle.top_right_point.coordinates, entry6.rectangle.bottom_left_point.coordinates, entry6.rectangle.top_right_point.coordinates])
-root_rectangle3 = Rectangle([entry7.rectangle.bottom_left_point.coordinates, entry7.rectangle.top_right_point.coordinates, entry8.rectangle.bottom_left_point.coordinates, entry8.rectangle.top_right_point.coordinates, entry9.rectangle.bottom_left_point.coordinates, entry9.rectangle.top_right_point.coordinates])
+root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point, entry1.rectangle.top_right_point, entry2.rectangle.bottom_left_point, entry2.rectangle.top_right_point, entry3.rectangle.bottom_left_point, entry3.rectangle.top_right_point])
+root_rectangle2 = Rectangle([entry4.rectangle.bottom_left_point, entry4.rectangle.top_right_point, entry5.rectangle.bottom_left_point, entry5.rectangle.top_right_point, entry6.rectangle.bottom_left_point, entry6.rectangle.top_right_point])
+root_rectangle3 = Rectangle([entry7.rectangle.bottom_left_point, entry7.rectangle.top_right_point, entry8.rectangle.bottom_left_point, entry8.rectangle.top_right_point, entry9.rectangle.bottom_left_point, entry9.rectangle.top_right_point])
 
 root_entry1 = Entry(root_rectangle1, internal_node1)
 root_entry2 = Entry(root_rectangle2, internal_node2)
@@ -117,7 +117,7 @@ Node.set_max_entries(4)
 tree = [root_node, internal_node1, internal_node2, internal_node3, leaf_node1, leaf_node2, leaf_node3, leaf_node4, leaf_node5, leaf_node6, leaf_node7, leaf_node8, leaf_node9]
 
 search_rectangle = Rectangle([[3.0, 5.0], [8.0, 10.0]])
-print("search rect is: ", search_rectangle.bottom_left_point.coordinates, " ", search_rectangle.top_right_point.coordinates)
+print("search rect is: ", search_rectangle.bottom_left_point, " ", search_rectangle.top_right_point)
 # points = find_points_in_area(tree[0], search_rectangle)
 points = search_rectangle.find_points_in_rectangle(tree[0])
 print(" found points in search rect:")
