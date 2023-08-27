@@ -2,7 +2,7 @@ import csv
 
 from hilbertcurve.hilbertcurve import HilbertCurve
 
-from Entry import Rectangle, Entry, LeafEntry
+from Entry import Rectangle, Entry, LeafEntry, Point
 from Node import Node
 
 
@@ -74,21 +74,21 @@ def choose_split_axis(entries, min_entries):
                 chosen_axis = axis
     else:
         # print(" in for not leaf")
-        for axis in range(len(entries[0].rectangle.bottom_left_point)):
-            entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[axis])
+        for axis in range(len(entries[0].rectangle.bottom_left_point.coordinates)):
+            entries.sort(key=lambda entry: entry.rectangle.bottom_left_point.coordinates[axis])
 
             sum_margin = 0
             for i in range(min_entries, len(entries) - min_entries + 1):
                 rect1_points = []
                 for entry in entries[:i]:
-                    rect1_points.append(entry.rectangle.bottom_left_point)
-                    rect1_points.append(entry.rectangle.top_right_point)
+                    rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                    rect1_points.append(entry.rectangle.top_right_point.coordinates)
                 rect1 = Rectangle(rect1_points)
 
                 rect2_points = []
                 for entry in entries[i:]:
-                    rect2_points.append(entry.rectangle.bottom_left_point)
-                    rect2_points.append(entry.rectangle.top_right_point)
+                    rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                    rect2_points.append(entry.rectangle.top_right_point.coordinates)
                 rect2 = Rectangle(rect2_points)
 
                 sum_margin += rect1.calculate_margin() + rect2.calculate_margin()
@@ -97,7 +97,7 @@ def choose_split_axis(entries, min_entries):
                 min_sum_margin = sum_margin
                 chosen_axis = axis
 
-            # entries.sort(key=lambda entry: entry.rectangle.top_right_point[axis])
+            # entries.sort(key=lambda entry: entry.rectangle.top_right_point.coordinates[axis])
 
     return chosen_axis
 
@@ -113,14 +113,14 @@ def choose_split_index(entries, split_axis, min_entries):
             rect2 = Rectangle([entry.point for entry in entries[i:]])
             overlap = rect1.calculate_overlap_value(rect2)
             overall_area = rect1.calculate_area() + rect2.calculate_area()
-            # print(" overlap of rect1 ", rect1.bottom_left_point, " ", rect1.top_right_point," and rect2 ", rect2.bottom_left_point, " ", rect2.top_right_point, " :", overlap)
+            # print(" overlap of rect1 ", rect1.bottom_left_point.coordinates, " ", rect1.top_right_point.coordinates," and rect2 ", rect2.bottom_left_point.coordinates, " ", rect2.top_right_point.coordinates, " :", overlap)
             # print("overall area: ", overall_area)
             if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
                 min_overlap = overlap
                 min_area = overall_area
                 chosen_index = i
     else:
-        entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[split_axis])
+        entries.sort(key=lambda entry: entry.rectangle.bottom_left_point.coordinates[split_axis])
 
         min_overlap = float('inf')
         min_area = float('inf')
@@ -129,19 +129,19 @@ def choose_split_index(entries, split_axis, min_entries):
         for i in range(min_entries, len(entries) - min_entries + 1):
             rect1_points = []
             for entry in entries[:i]:
-                rect1_points.append(entry.rectangle.bottom_left_point)
-                rect1_points.append(entry.rectangle.top_right_point)
+                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect1_points.append(entry.rectangle.top_right_point.coordinates)
             rect1 = Rectangle(rect1_points)
 
             rect2_points = []
             for entry in entries[i:]:
-                rect2_points.append(entry.rectangle.bottom_left_point)
-                rect2_points.append(entry.rectangle.top_right_point)
+                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect2_points.append(entry.rectangle.top_right_point.coordinates)
             rect2 = Rectangle(rect2_points)
 
             overlap = rect1.calculate_overlap_value(rect2)
             overall_area = rect1.calculate_area() + rect2.calculate_area()
-            # print(" overlap of rect1 ", rect1.bottom_left_point, " ", rect1.top_right_point," and rect2 ", rect2.bottom_left_point, " ", rect2.top_right_point, " :", overlap)
+            # print(" overlap of rect1 ", rect1.bottom_left_point.coordinates, " ", rect1.top_right_point.coordinates," and rect2 ", rect2.bottom_left_point.coordinates, " ", rect2.top_right_point.coordinates, " :", overlap)
             # print("overall area: ", overall_area)
 
             if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
@@ -181,15 +181,15 @@ def overflow_treatment(node, level_of_node, tree):
 
             rect1_points = []
             for entry in entry_group1:
-                rect1_points.append(entry.rectangle.bottom_left_point)
-                rect1_points.append(entry.rectangle.top_right_point)
+                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect1_points.append(entry.rectangle.top_right_point.coordinates)
             rect1 = Rectangle(rect1_points)
             root_entry1 = Entry(rect1, new_node1)
 
             rect2_points = []
             for entry in entry_group2:
-                rect2_points.append(entry.rectangle.bottom_left_point)
-                rect2_points.append(entry.rectangle.top_right_point)
+                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect2_points.append(entry.rectangle.top_right_point.coordinates)
             rect2 = Rectangle(rect2_points)
             root_entry2 = Entry(rect2, new_node2)
 
@@ -239,7 +239,7 @@ def overflow_treatment(node, level_of_node, tree):
 
             # print("length of tree:", len(tree))
             # for k, entr in enumerate(node.parent.entries):
-            #     print("rect", k, ": ", entr.rectangle.bottom_left_point, " ", entr.rectangle.top_right_point)
+            #     print("rect", k, ": ", entr.rectangle.bottom_left_point.coordinates, " ", entr.rectangle.top_right_point.coordinates)
 
             if len(node.parent.entries) > Node.max_entries:
                 overflow_treatment(new_leaf_node1.parent, level_of_node-1, tree)
@@ -252,15 +252,15 @@ def overflow_treatment(node, level_of_node, tree):
 
             rect1_points = []
             for entry in entry_group1:
-                rect1_points.append(entry.rectangle.bottom_left_point)
-                rect1_points.append(entry.rectangle.top_right_point)
+                rect1_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect1_points.append(entry.rectangle.top_right_point.coordinates)
             rect1 = Rectangle(rect1_points)
             internal_entry1 = Entry(rect1, new_node1)
 
             rect2_points = []
             for entry in entry_group2:
-                rect2_points.append(entry.rectangle.bottom_left_point)
-                rect2_points.append(entry.rectangle.top_right_point)
+                rect2_points.append(entry.rectangle.bottom_left_point.coordinates)
+                rect2_points.append(entry.rectangle.top_right_point.coordinates)
             rect2 = Rectangle(rect2_points)
             internal_entry2 = Entry(rect2, new_node2)
 
@@ -283,7 +283,7 @@ def overflow_treatment(node, level_of_node, tree):
 
             # print(" Internal node split")
             # for k, entr in enumerate(node.parent.entries):
-            #     print("rect", k, ": ", entr.rectangle.bottom_left_point, " ", entr.rectangle.top_right_point)
+            #     print("rect", k, ": ", entr.rectangle.bottom_left_point.coordinates, " ", entr.rectangle.top_right_point.coordinates)
 
             if len(node.parent.entries) > Node.max_entries:
                 overflow_treatment(new_node1.parent, level_of_node - 1, tree)
@@ -313,8 +313,8 @@ def adjust_rectangles(node):
         else:
             new_points = []
             for entry in node.entries:
-                new_points.append(entry.rectangle.bottom_left_point)
-                new_points.append(entry.rectangle.top_right_point)
+                new_points.append(entry.rectangle.bottom_left_point.coordinates)
+                new_points.append(entry.rectangle.top_right_point.coordinates)
             node.parent.entries[node.slot_in_parent].set_rectangle(new_points)
         adjust_rectangles(node.parent)
 
@@ -497,8 +497,8 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 if isinstance(entry, LeafEntry):
                     print("       leaf_entry", j, ":", entry.point)
                 else:
-                    print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                          entry.rectangle.top_right_point)
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
 
         overflow_treatment_level = tree[-1].find_node_level()
         Node.set_max_entries(max_entries)
@@ -511,8 +511,8 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 if isinstance(entry, LeafEntry):
                     print("       leaf_entry", j, ":", entry.point)
                 else:
-                    print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                          entry.rectangle.top_right_point)
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
 
         print("The single internal node has been set as the root.")
     else:
@@ -527,8 +527,8 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 if isinstance(entry, LeafEntry):
                     print("       leaf_entry", j, ":", entry.point)
                 else:
-                    print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                          entry.rectangle.top_right_point)
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
         print("---------------------------")
         # If the last internal node has entries less than the minimum required
         # Check if the last internal node has fewer entries than the minimum
@@ -601,8 +601,8 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 if isinstance(entry, LeafEntry):
                     print("       leaf_entry", j, ":", entry.point)
                 else:
-                    print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                          entry.rectangle.top_right_point)
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
 
         print("Entries to be Inserted:")
         for leaf_entry in entries_to_be_inserted:
@@ -621,8 +621,8 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
                 if isinstance(entry, LeafEntry):
                     print("       leaf_entry", j, ":", entry.point)
                 else:
-                    print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                          entry.rectangle.top_right_point)
+                    print("       entry", j, ":", entry.rectangle.bottom_left_point.coordinates, " ",
+                          entry.rectangle.top_right_point.coordinates)
 
         print("Done")
 
