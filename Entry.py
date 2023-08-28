@@ -13,17 +13,10 @@ class Entry:
     def set_child_node(self, new_child_node):
         self.child_node = new_child_node
 
-    # def to_xml(self, parent):
-    #     entry_elem = ET.SubElement(parent, "Entry")
-    #     self.rectangle.to_xml(entry_elem)
-    #     child_node_id = id(self.child_node)
-    #     ET.SubElement(entry_elem, "ChildNodeID").text = str(child_node_id)
-
-    def to_xml(self, parent):
+    def to_xml(self, parent, child_node_index):
         entry_elem = ET.SubElement(parent, "Entry")
         self.rectangle.to_xml(entry_elem)
-        child_node_id = id(self.child_node)
-        ET.SubElement(entry_elem, "ChildNodeID").text = str(child_node_id)
+        ET.SubElement(entry_elem, "ChildNodeIndex").text = str(child_node_index)
 
 
 class LeafEntry:
@@ -31,27 +24,12 @@ class LeafEntry:
         self.record_id = (record[0], record[1])
         self.point = record[2:]
 
-    # def to_xml(self, parent):
-    #     leaf_entry_elem = ET.SubElement(parent, "LeafEntry")
-    #     ET.SubElement(leaf_entry_elem, "RecordID").text = str(self.record_id)
-    #     point_elem = ET.SubElement(leaf_entry_elem, "Point")
-    #     ET.SubElement(point_elem, "Coordinates").text = " ".join(map(str, self.point))
-
     def to_xml(self, parent):
         leaf_entry_elem = ET.SubElement(parent, "LeafEntry")
         record_id_elem = ET.SubElement(leaf_entry_elem, "RecordID")
         record_id_elem.text = str(self.record_id[0]) + "," + str(self.record_id[1])
         point_elem = ET.SubElement(leaf_entry_elem, "Point")
         point_elem.text = " ".join(map(str, self.point))
-
-# class Point:
-#     # coordinates is a list with the coordinates for one point
-#     def __init__(self, coordinates):
-#         self = coordinates
-#
-#     def to_xml(self, parent):
-#         point_elem = ET.SubElement(parent, "Point")
-#         ET.SubElement(point_elem, "Coordinates").text = " ".join(map(str, self))
 
 
 class Rectangle:
@@ -68,9 +46,6 @@ class Rectangle:
             for i in range(num_of_dimensions):
                 self.bottom_left_point[i] = min(self.bottom_left_point[i], point[i])  # min of all dimensions
                 self.top_right_point[i] = max(self.top_right_point[i], point[i])  # max of all dimensions
-
-        # self.bottom_left_point = Point(self.bottom_left_point)
-        # self.top_right_point = Point(self.top_right_point)
 
     def center(self):
         num_of_dimensions = len(self.bottom_left_point)
@@ -187,11 +162,6 @@ class Rectangle:
                 if self.overlaps_with_point(leaf_entry.point):
                     result.append(leaf_entry)
         return result
-
-    # def to_xml(self, parent):
-    #     rectangle_elem = ET.SubElement(parent, "Rectangle")
-    #     self.bottom_left_point.to_xml(rectangle_elem)
-    #     self.top_right_point.to_xml(rectangle_elem)
 
     def to_xml(self, parent):
         rectangle_elem = ET.SubElement(parent, "Rectangle")
