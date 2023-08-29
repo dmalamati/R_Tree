@@ -64,8 +64,7 @@ class Rectangle:
         for i in range(len(center_of_rectangle)):
             squared_diff_sum += (center_of_rectangle[i] - point[i]) ** 2
 
-        distance = math.sqrt(squared_diff_sum)
-        return distance
+        return math.sqrt(squared_diff_sum)
 
     def calculate_overlap_enlargement(self, new_leaf_entry, index, node):
         # Create a new rectangle using the existing corners and the new_leaf_entry's point
@@ -169,7 +168,6 @@ class Rectangle:
         top_right_point_elem = ET.SubElement(rectangle_elem, "TopRightPoint")
         bottom_left_point_elem.text = " ".join(map(str, self.bottom_left_point))
         top_right_point_elem.text = " ".join(map(str, self.top_right_point))
-
 
 # Example usage for 2D rectangle
 # points_2d = [[1.0, 2.0], [2.0, 3.0], [0.0, 4.0]]

@@ -6,6 +6,8 @@ class Node:
     max_entries = 4  # M
     min_entries = math.floor(max_entries/2.0)  # m
 
+    overflow_treatment_level = 1
+
     def __init__(self, entries=None, parent=None, slot_in_parent=None):
         if entries is None:
             self.entries = []  # List of entries (internal or leaf)
@@ -58,6 +60,13 @@ class Node:
         # if cls.min_entries < 2:
         #     cls.min_entries = 2  # 2 <= m <= M/2
 
+    @classmethod
+    def set_overflow_treatment_level(cls, leaf_level):
+        cls.overflow_treatment_level = leaf_level
+
+    @classmethod
+    def increase_overflow_treatment_level(cls):
+        cls.overflow_treatment_level += 1
 
 # class InternalNode(Node):
 #     def __init__(self, entries=None, parent=None):

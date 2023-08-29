@@ -1,9 +1,10 @@
 import csv
 from Entry import Entry, LeafEntry, Rectangle
 from Node import Node
+import xml.etree.ElementTree as ET
 
 input_file = "datafile.csv"
-overflow_treatment_level = 1
+# overflow_treatment_level = 1
 
 
 # Function to read data from a specific block
@@ -162,7 +163,7 @@ def choose_split_index(entries, split_axis, min_entries):
 
 
 def overflow_treatment(node, level_of_node, tree):
-    global overflow_treatment_level
+    # global overflow_treatment_level
     if level_of_node == 0:
         # split root
         entry_group1, entry_group2 = split(node, Node.min_entries)
@@ -216,10 +217,11 @@ def overflow_treatment(node, level_of_node, tree):
             tree.insert(1, new_node1)
             tree.insert(2, new_node2)
 
-    elif level_of_node == overflow_treatment_level:
+    elif level_of_node == Node.overflow_treatment_level:
         # reinsert
         # print("reinsert")
-        overflow_treatment_level += 1
+        # overflow_treatment_level += 1
+        Node.increase_overflow_treatment_level()
         reinsert(tree, node)
     else:
         # split node
@@ -427,12 +429,64 @@ def condense_tree(tree, leaf_node):
         tree.remove(root)
 
     # insert leaf entries of eliminated_nodes in tree
-    global overflow_treatment_level
-    overflow_treatment_level = tree[-1].find_node_level()
+    # global overflow_treatment_level
+    # overflow_treatment_level = tree[-1].find_node_level()
+    Node.set_overflow_treatment_level(tree[-1].find_node_level())
     for node in eliminated_nodes:
         leaf_entries_to_insert = get_leaf_entries_from_node(node)
         for leaf_entry in leaf_entries_to_insert:
             insert_entry_to_tree(tree, leaf_entry)
+
+
+def load_tree_from_xml(filename):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    nodes = []  # To store nodes in order
+
+    max_entries = int(root.find("MaxEntries").text)
+    Node.set_max_entries(max_entries)
+
+    for node_elem in root.findall("Node"):
+        entries = []
+        child_node_indices = []
+
+        if node_elem.find("Entry") is not None:
+            for entry_elem in node_elem.findall("Entry"):
+                rectangle_elem = entry_elem.find("Rectangle")
+                bottom_left_point = [float(coord) for coord in rectangle_elem.find("BottomLeftPoint").text.split()]
+                top_right_point = [float(coord) for coord in rectangle_elem.find("TopRightPoint").text.split()]
+                rectangle = Rectangle([bottom_left_point, top_right_point])
+
+                child_node_index_elem = entry_elem.find("ChildNodeIndex")
+                if child_node_index_elem is not None:
+                    child_node_index = int(child_node_index_elem.text)
+                    child_node_indices.append(child_node_index)
+                entries.append(Entry(rectangle, None))
+
+        elif node_elem.find("LeafEntry") is not None:
+            for entry_elem in node_elem.findall("LeafEntry"):
+                record_id_elem = entry_elem.find("RecordID")
+                point_elem = entry_elem.find("Point")
+                record_id = tuple(map(int, record_id_elem.text.split(",")))
+                point = [float(coord) for coord in point_elem.text.split()]
+                # leaf_entry = LeafEntry([record_id[0], record_id[1]] + point)
+                record = [record_id[0], record_id[1]] + [float(coord) for coord in point]
+                leaf_entry = LeafEntry(record)
+                entries.append(leaf_entry)
+
+        parent_node_index_elem = node_elem.find("ParentNodeIndex")
+        if parent_node_index_elem is not None:
+            parent_node = nodes[int(parent_node_index_elem.text)]
+            slot_in_parent = int(node_elem.find("SlotInParent").text)
+            node = Node(entries, parent_node, slot_in_parent)  # creates node and sets parent
+            parent_node.entries[slot_in_parent].set_child_node(node)  # sets the parent's corresponding entry's child
+        else:
+            node = Node(entries)  # only for root node
+        nodes.append(node)
+
+        Node.set_overflow_treatment_level(nodes[-1].find_node_level())
+
+    return nodes
 
 
 with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
@@ -460,109 +514,6 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
 
         block_data = read_block_data(csv_reader, block_id)
         blocks.append(block_data)
-
-    # START TEST: split
-    leaf_entry1 = LeafEntry([1, 0, 0.0, 4.0])
-    leaf_entry2 = LeafEntry([1, 1, 1.0, 2.0])
-    leaf_entry3 = LeafEntry([1, 2, 1.0, 3.0])
-
-    leaf_entry4 = LeafEntry([1, 3, 2.0, 2.0])
-    leaf_entry5 = LeafEntry([1, 4, 2.0, 3.0])
-    leaf_entry6 = LeafEntry([1, 5, 4.0, 1.0])
-
-    leaf_entry7 = LeafEntry([1, 6, 1.0, 7.0])
-    leaf_entry8 = LeafEntry([1, 7, 2.0, 6.0])
-    leaf_entry9 = LeafEntry([1, 8, 3.0, 8.0])
-
-    leaf_entry10 = LeafEntry([1, 9, 7.0, 5.0])
-    leaf_entry11 = LeafEntry([1, 10, 8.0, 7.0])
-    leaf_entry12 = LeafEntry([1, 11, 9.0, 6.0])
-
-    leaf_entry13 = LeafEntry([1, 12, 8.0, 2.0])
-    leaf_entry14 = LeafEntry([1, 13, 9.0, 4.0])
-    leaf_entry15 = LeafEntry([1, 14, 12.0, 1.0])
-
-    leaf_entry16 = LeafEntry([1, 15, 10.0, 5.0])
-    leaf_entry17 = LeafEntry([1, 16, 10.0, 7.0])
-    leaf_entry18 = LeafEntry([1, 17, 11.0, 5.0])
-
-    leaf_entry19 = LeafEntry([1, 18, 6.0, 9.0])
-    leaf_entry20 = LeafEntry([1, 19, 6.0, 10.0])
-    leaf_entry21 = LeafEntry([1, 20, 7.0, 10.0])
-
-    leaf_entry22 = LeafEntry([1, 21, 10.0, 11.0])
-    leaf_entry23 = LeafEntry([1, 22, 12.0, 12.0])
-    leaf_entry24 = LeafEntry([1, 23, 13.0, 9.0])
-
-    leaf_entry25 = LeafEntry([1, 24, 8.0, 13.0])
-    leaf_entry26 = LeafEntry([1, 25, 9.0, 14.0])
-    leaf_entry27 = LeafEntry([1, 26, 10.0, 13.0])
-
-    leaf_node1 = Node([leaf_entry1, leaf_entry2, leaf_entry3])
-    leaf_node2 = Node([leaf_entry4, leaf_entry5, leaf_entry6])
-    leaf_node3 = Node([leaf_entry7, leaf_entry8, leaf_entry9])
-    leaf_node4 = Node([leaf_entry10, leaf_entry11, leaf_entry12])
-    leaf_node5 = Node([leaf_entry13, leaf_entry14, leaf_entry15])
-    leaf_node6 = Node([leaf_entry16, leaf_entry17, leaf_entry18])
-    leaf_node7 = Node([leaf_entry19, leaf_entry20, leaf_entry21])
-    leaf_node8 = Node([leaf_entry22, leaf_entry23, leaf_entry24])
-    leaf_node9 = Node([leaf_entry25, leaf_entry26, leaf_entry27])
-
-    rectangle1 = Rectangle([leaf_entry1.point, leaf_entry2.point, leaf_entry3.point])
-    rectangle2 = Rectangle([leaf_entry4.point, leaf_entry5.point, leaf_entry6.point])
-    rectangle3 = Rectangle([leaf_entry7.point, leaf_entry8.point, leaf_entry9.point])
-    rectangle4 = Rectangle([leaf_entry10.point, leaf_entry11.point, leaf_entry12.point])
-    rectangle5 = Rectangle([leaf_entry13.point, leaf_entry14.point, leaf_entry15.point])
-    rectangle6 = Rectangle([leaf_entry16.point, leaf_entry17.point, leaf_entry18.point])
-    rectangle7 = Rectangle([leaf_entry19.point, leaf_entry20.point, leaf_entry21.point])
-    rectangle8 = Rectangle([leaf_entry22.point, leaf_entry23.point, leaf_entry24.point])
-    rectangle9 = Rectangle([leaf_entry25.point, leaf_entry26.point, leaf_entry27.point])
-
-    entry1 = Entry(rectangle1, leaf_node1)
-    entry2 = Entry(rectangle2, leaf_node2)
-    entry3 = Entry(rectangle3, leaf_node3)
-    entry4 = Entry(rectangle4, leaf_node4)
-    entry5 = Entry(rectangle5, leaf_node5)
-    entry6 = Entry(rectangle6, leaf_node6)
-    entry7 = Entry(rectangle7, leaf_node7)
-    entry8 = Entry(rectangle8, leaf_node8)
-    entry9 = Entry(rectangle9, leaf_node9)
-
-    internal_node1 = Node([entry1, entry2, entry3])
-    # internal_node1 = Node([entry1, entry2])
-    internal_node2 = Node([entry4, entry5, entry6])
-    internal_node3 = Node([entry7, entry8, entry9])
-
-    root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point, entry1.rectangle.top_right_point, entry2.rectangle.bottom_left_point, entry2.rectangle.top_right_point, entry3.rectangle.bottom_left_point, entry3.rectangle.top_right_point])
-    # root_rectangle1 = Rectangle([entry1.rectangle.bottom_left_point, entry1.rectangle.top_right_point, entry2.rectangle.bottom_left_point, entry2.rectangle.top_right_point])
-    root_rectangle2 = Rectangle([entry4.rectangle.bottom_left_point, entry4.rectangle.top_right_point, entry5.rectangle.bottom_left_point, entry5.rectangle.top_right_point, entry6.rectangle.bottom_left_point, entry6.rectangle.top_right_point])
-    root_rectangle3 = Rectangle([entry7.rectangle.bottom_left_point, entry7.rectangle.top_right_point, entry8.rectangle.bottom_left_point, entry8.rectangle.top_right_point, entry9.rectangle.bottom_left_point, entry9.rectangle.top_right_point])
-
-    root_entry1 = Entry(root_rectangle1, internal_node1)
-    root_entry2 = Entry(root_rectangle2, internal_node2)
-    root_entry3 = Entry(root_rectangle3, internal_node3)
-
-    root_node = Node([root_entry1, root_entry2, root_entry3])
-    # root_node = Node([root_entry1, root_entry2])
-
-    leaf_node1.set_parent(internal_node1, 0)
-    leaf_node2.set_parent(internal_node1, 1)
-    leaf_node3.set_parent(internal_node1, 2)
-    leaf_node4.set_parent(internal_node2, 0)
-    leaf_node5.set_parent(internal_node2, 1)
-    leaf_node6.set_parent(internal_node2, 2)
-    leaf_node7.set_parent(internal_node3, 0)
-    leaf_node8.set_parent(internal_node3, 1)
-    leaf_node9.set_parent(internal_node3, 2)
-
-    internal_node1.set_parent(root_node, 0)
-    internal_node2.set_parent(root_node, 1)
-    internal_node3.set_parent(root_node, 2)
-
-    Node.set_max_entries(4)
-
-    tree = [root_node, internal_node1, internal_node2, internal_node3, leaf_node1, leaf_node2, leaf_node3, leaf_node4, leaf_node5, leaf_node6, leaf_node7, leaf_node8, leaf_node9]
-    # tree = [root_node, internal_node1, internal_node2, leaf_node1, leaf_node2, leaf_node4, leaf_node5, leaf_node6]
 
     # leaf_entry1 = LeafEntry([1, 0, 1.0, 1.0])
     # leaf_entry2 = LeafEntry([1, 1, 1.0, 4.0])
@@ -595,6 +546,9 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     # leaf_node3.set_parent(root, 2)
     # tree = [root, leaf_node1, leaf_node2, leaf_node3]
 
+    tree = load_tree_from_xml("indexfile2.xml")
+    print("max entries = ", Node.max_entries)
+
     for i, n in enumerate(tree):
         print("node ", i, "level ", n.find_node_level())
         if isinstance(n.entries[0], LeafEntry):
@@ -604,9 +558,36 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
             for j, entry in enumerate(n.entries):
                 print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
 
-    leaf_entry_to_find = LeafEntry([1, 1, 1.0, 2.0])
-    delete_entry_from_tree(tree, leaf_entry_to_find)
+    print("\n")
+    # leaf_entry_to_find = LeafEntry([1, 0, -6.0, -5.0])
+    # delete_entry_from_tree(tree, leaf_entry_to_find)
+    # leaf_entry_to_find = LeafEntry([1, 2, -3.0, -4.0])
+    # delete_entry_from_tree(tree, leaf_entry_to_find)
+    insert_entry_to_tree(tree, LeafEntry([1, 20, -3.0, 1.0]))
+    insert_entry_to_tree(tree, LeafEntry([1, 30, -5.0, 2.0]))
+    insert_entry_to_tree(tree, LeafEntry([1, 40, -4.0, -6.0]))
+    insert_entry_to_tree(tree, LeafEntry([1, 50, -7.0, -7.0]))
+    insert_entry_to_tree(tree, LeafEntry([1, 60, -6.0, -2.0]))
+    insert_entry_to_tree(tree, LeafEntry([1, 70, -8.0, -2.0]))  # κανει reinsert οποτε δεν γινει slpit!
 
+    for i, n in enumerate(tree):
+        print("node ", i, "level ", n.find_node_level())
+        if isinstance(n.entries[0], LeafEntry):
+            for j, entry in enumerate(n.entries):
+                print("     leaf_entry ", j, ": ", entry.point)
+        else:
+            for j, entry in enumerate(n.entries):
+                print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
+    #
+    # print("new deletion:")
+
+    # leaf_entry_to_find = LeafEntry([1, 2, 1.0, 3.0])
+    # delete_entry_from_tree(tree, leaf_entry_to_find)
+    # delete_entry_from_tree(tree, LeafEntry([1, 0, 0.0, 4.0]))
+    # delete_entry_from_tree(tree, LeafEntry([1, 5, 4.0, 1.0]))
+    # delete_entry_from_tree(tree, LeafEntry([1, 3, 2.0, 2.0]))
+    # print("len of tree", len(tree))
+    #
     # for i, n in enumerate(tree):
     #     print("node ", i, "level ", n.find_node_level())
     #     if isinstance(n.entries[0], LeafEntry):
@@ -615,23 +596,6 @@ with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
     #     else:
     #         for j, entry in enumerate(n.entries):
     #             print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
-    #
-    # print("new deletion:")
-    leaf_entry_to_find = LeafEntry([1, 2, 1.0, 3.0])
-    delete_entry_from_tree(tree, leaf_entry_to_find)
-    delete_entry_from_tree(tree, LeafEntry([1, 0, 0.0, 4.0]))
-    delete_entry_from_tree(tree, LeafEntry([1, 5, 4.0, 1.0]))
-    delete_entry_from_tree(tree, LeafEntry([1, 3, 2.0, 2.0]))
-    print("len of tree", len(tree))
-
-    for i, n in enumerate(tree):
-        print("node ", i, "level ", n.find_node_level())
-        if isinstance(n.entries[0], LeafEntry):
-            for j, entry in enumerate(n.entries):
-                print("     leaf_entry ", j, ": ", entry.point)
-        else:
-            for j, entry in enumerate(n.entries):
-                print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
 
 
 
