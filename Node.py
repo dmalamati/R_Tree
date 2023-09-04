@@ -1,10 +1,10 @@
 import math
 from Entry import Entry, LeafEntry
 
-## na allakso to m se 40% tou M -> to leei kato apo to split sto paper ##
+
 class Node:
     max_entries = 4  # M
-    min_entries = math.floor(max_entries/2.0)  # m
+    min_entries = math.floor(max_entries * 0.4)  # m = 40% of M
 
     overflow_treatment_level = 1
 
@@ -57,8 +57,6 @@ class Node:
     def set_max_entries(cls, number):
         cls.max_entries = number
         cls.min_entries = math.floor(number/2.0)
-        # if cls.min_entries < 2:
-        #     cls.min_entries = 2  # 2 <= m <= M/2
 
     @classmethod
     def set_overflow_treatment_level(cls, leaf_level):
@@ -67,21 +65,3 @@ class Node:
     @classmethod
     def increase_overflow_treatment_level(cls):
         cls.overflow_treatment_level += 1
-
-# class InternalNode(Node):
-#     def __init__(self, entries=None, parent=None):
-#         super().__init__(entries=None, parent=None)
-#
-#
-# class LeafNode(Node):
-#     def __init__(self, entries=None, parent=None):
-#         super().__init__(entries=None, parent=None)
-
-#
-# entr = [[1, 2, 3], [4, 5, 6]]
-# entr2 = [[5, 2, 2], [2, 2, 5]]
-# node1 = Node()
-# node1.insert_entry(entr)
-# print(node1.entries)
-# node1.insert_entry(entr2)
-# print(node1.entries)

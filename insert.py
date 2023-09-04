@@ -1,28 +1,71 @@
-import csv
 from Entry import Entry, LeafEntry, Rectangle
 from Node import Node
-import pandas as pd
-
-input_file = "datafile.csv"
-# overflow_treatment_level = 1
+import xml.etree.ElementTree as ET
+import xml.dom.minidom as minidom
 
 
 # Function to read data from a specific block
-def read_block_data(csv_reader, block_id):
-    block_data = []
+# def read_block_data(csv_reader, block_id):
+#     block_data = []
+#
+#     slot = 0  # Initialize slot for each block
+#     for row in csv_reader:
+#         row_block_id = int(row[0])
+#         if row_block_id == block_id:
+#             lat = float(row[2])  # Convert lat to float
+#             lon = float(row[3])  # Convert lon to float
+#             block_data.append([block_id, slot, lat, lon])  # Include block_id, slot, lat, lon
+#             slot += 1  # Increment slot for each record in the block
+#         elif row_block_id > block_id:
+#             break  # Stop reading when the next block is reached
+#
+#     return block_data
 
-    slot = 0  # Initialize slot for each block
-    for row in csv_reader:
-        row_block_id = int(row[0])
-        if row_block_id == block_id:
-            lat = float(row[2])  # Convert lat to float
-            lon = float(row[3])  # Convert lon to float
-            block_data.append([block_id, slot, lat, lon])  # Include block_id, slot, lat, lon
-            slot += 1  # Increment slot for each record in the block
-        elif row_block_id > block_id:
-            break  # Stop reading when the next block is reached
 
-    return block_data
+def read_all_blocks_from_datafile(filename):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    # read data from block0
+    block0 = None
+    for block_elem in root.findall(".//Block[@id='" + str(0) + "']"):
+        block0 = block_elem
+        break
+
+    blocks = []
+    num_of_blocks = int(block0.find(".//num_of_blocks").text)
+    for block_id in range(1, num_of_blocks):
+        block_data = read_block_from_datafile(block_id, filename)
+        blocks.append(block_data)
+
+    Node.set_max_entries(len(blocks[0]))
+
+    return blocks
+
+
+def read_block_from_datafile(block_id, filename):
+    # Parse the datafile.xml
+    tree = ET.parse(filename)
+    root = tree.getroot()
+
+    # Find the specified block with the given block_id
+    block_to_read = None
+    for block_elem in root.findall(".//Block[@id='" + str(block_id) + "']"):
+        block_to_read = block_elem
+        break
+
+    if block_to_read is None:
+        return []  # Block with the specified block_id not found
+
+    # Extract and return the records within the block
+    records = []
+    for record_elem in block_to_read.findall(".//Record"):
+        block_id = int(block_to_read.get("id"))
+        slot_in_block = int(record_elem.get("id"))
+        coordinates = record_elem.find(".//coordinates").text.split()
+        lat, lon = map(float, coordinates)
+        records.append([block_id, slot_in_block, lat, lon])
+
+    return records
 
 
 def choose_subtree(new_leaf_entry, tree):
@@ -362,42 +405,144 @@ def insert_one_by_one(max_entries, blocks):
     return tree  # return full tree
 
 
-with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
-    csv_reader = csv.reader(csv_file)
-    # Skip the header row
-    next(csv_reader)
-    # Read and store the metadata from the second row
-    metadata = next(csv_reader)
-    # Parse metadata
-    total_entries = int(metadata[1])
-    total_blocks = int(metadata[2])
-    block_size = int(metadata[3])
-    # Store all block data in a list called "blocks"
-    blocks = []
-    # Read and process each data block
-    for block_id in range(1, total_blocks + 1):
-        csv_file.seek(0)  # Reset the reader position to the beginning
-        next(csv_reader)  # Skip the header row
-        next(csv_reader)  # Skip the metadata row
-
-        block_data = read_block_data(csv_reader, block_id)
-        blocks.append(block_data)
-
-    max_entries = int(total_entries / total_blocks)
-
-    print("max entries = ", max_entries)
-    tree = insert_one_by_one(max_entries, blocks)
-    print("tree len = ", len(tree))
-    for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.record_id, entry.point)
+def save_tree_to_xml(tree, filename):
+    def build_xml(node_elem, node, nodes):
+        for entry in node.entries:
+            if isinstance(entry, Entry):
+                child_node_index = nodes.index(entry.child_node)
+                entry.to_xml(node_elem, child_node_index)
             else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
+                entry.to_xml(node_elem)
+        if node.parent is not None:
+            parent_node_index = nodes.index(node.parent)
+            ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
+            ET.SubElement(node_elem, "SlotInParent").text = str(node.slot_in_parent)
+
+    root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
+
+    for node in tree:
+        node_elem = ET.SubElement(root_elem, "Node")
+        build_xml(node_elem, node, tree)
+
+    xml_tree = ET.ElementTree(root_elem)
+
+    # Save to the specified filename with 'utf-8' encoding and pretty formatting
+    xml_tree.write(filename, encoding="utf-8", xml_declaration=True)
+
+    # Load the saved XML file and format it
+    xml_content = minidom.parse(filename)
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(xml_content.toprettyxml(indent="    "))
 
 
+def load_tree_from_xml(filename):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    nodes = []  # To store nodes in order
+
+    max_entries = int(root.attrib.get("max_entries"))
+    Node.set_max_entries(max_entries)
+
+    for node_elem in root.findall("Node"):
+        entries = []
+        child_node_indices = []
+
+        if node_elem.find("Entry") is not None:
+            for entry_elem in node_elem.findall("Entry"):
+                rectangle_elem = entry_elem.find("Rectangle")
+                bottom_left_point = [float(coord) for coord in rectangle_elem.find("BottomLeftPoint").text.split()]
+                top_right_point = [float(coord) for coord in rectangle_elem.find("TopRightPoint").text.split()]
+                rectangle = Rectangle([bottom_left_point, top_right_point])
+
+                child_node_index_elem = entry_elem.find("ChildNodeIndex")
+                if child_node_index_elem is not None:
+                    child_node_index = int(child_node_index_elem.text)
+                    child_node_indices.append(child_node_index)
+                entries.append(Entry(rectangle, None))
+
+        elif node_elem.find("LeafEntry") is not None:
+            for entry_elem in node_elem.findall("LeafEntry"):
+                record_id_elem = entry_elem.find("RecordID")
+                point_elem = entry_elem.find("Point")
+                record_id = tuple(map(int, record_id_elem.text.split(",")))
+                point = [float(coord) for coord in point_elem.text.split()]
+                # leaf_entry = LeafEntry([record_id[0], record_id[1]] + point)
+                record = [record_id[0], record_id[1]] + [float(coord) for coord in point]
+                leaf_entry = LeafEntry(record)
+                entries.append(leaf_entry)
+
+        parent_node_index_elem = node_elem.find("ParentNodeIndex")
+        if parent_node_index_elem is not None:
+            parent_node = nodes[int(parent_node_index_elem.text)]
+            slot_in_parent = int(node_elem.find("SlotInParent").text)
+            node = Node(entries, parent_node, slot_in_parent)  # creates node and sets parent
+            parent_node.entries[slot_in_parent].set_child_node(node)  # sets the parent's corresponding entry's child
+        else:
+            node = Node(entries)  # only for root node
+        nodes.append(node)
+
+        Node.set_overflow_treatment_level(nodes[-1].find_node_level())
+
+    return nodes
 
 
+# with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
+#     csv_reader = csv.reader(csv_file)
+#     # Skip the header row
+#     next(csv_reader)
+#     # Read and store the metadata from the second row
+#     metadata = next(csv_reader)
+#     # Parse metadata
+#     total_entries = int(metadata[1])
+#     total_blocks = int(metadata[2])
+#     block_size = int(metadata[3])
+#     # Store all block data in a list called "blocks"
+#     blocks = []
+#     # Read and process each data block
+#     for block_id in range(1, total_blocks + 1):
+#         csv_file.seek(0)  # Reset the reader position to the beginning
+#         next(csv_reader)  # Skip the header row
+#         next(csv_reader)  # Skip the metadata row
+#
+#         block_data = read_block_data(csv_reader, block_id)
+#         blocks.append(block_data)
+#
+#     max_entries = int(total_entries / total_blocks)
+#
+#     print("max entries = ", max_entries)
+#     tree = insert_one_by_one(max_entries, blocks)
+#     print("tree len = ", len(tree))
+#     for i, node in enumerate(tree):
+#         print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))
+#         for j, entry in enumerate(node.entries):
+#             if isinstance(entry, LeafEntry):
+#                 print("       leaf_entry", j, ":", entry.record_id, entry.point)
+#             else:
+#                 print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
+
+blocks_for_file = read_all_blocks_from_datafile("datafile.xml")
+print(Node.max_entries)
+tree = insert_one_by_one(Node.max_entries, blocks_for_file)
+print("tree len = ", len(tree))
+for i, node in enumerate(tree):
+    print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))
+    for j, entry in enumerate(node.entries):
+        if isinstance(entry, LeafEntry):
+            print("       leaf_entry", j, ":", entry.record_id, entry.point)
+        else:
+            print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
+
+print("\n")
+
+save_tree_to_xml(tree, "indexfile.xml")
+rtree = load_tree_from_xml("indexfile.xml")
+print("tree len = ", len(rtree))
+for i, node in enumerate(rtree):
+    print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))
+    for j, entry in enumerate(node.entries):
+        if isinstance(entry, LeafEntry):
+            print("       leaf_entry", j, ":", entry.record_id, entry.point)
+        else:
+            print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
 
 

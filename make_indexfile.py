@@ -17,20 +17,21 @@ def save_tree_to_xml(tree, filename):
             ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
             ET.SubElement(node_elem, "SlotInParent").text = str(node.slot_in_parent)
 
-    root_elem = ET.Element("Nodes")
-
-    max_entries_elem = ET.SubElement(root_elem, "MaxEntries")
-    max_entries_elem.text = str(Node.max_entries)
+    root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
 
     for node in tree:
         node_elem = ET.SubElement(root_elem, "Node")
         build_xml(node_elem, node, tree)
 
-    xml_string = ET.tostring(root_elem, encoding="utf-8")
-    pretty_xml = minidom.parseString(xml_string).toprettyxml(indent="  ", newl="\n")
+    xml_tree = ET.ElementTree(root_elem)
 
-    with open(filename, "w") as f:
-        f.write(pretty_xml)
+    # Save to the specified filename with 'utf-8' encoding and pretty formatting
+    xml_tree.write(filename, encoding="utf-8", xml_declaration=True)
+
+    # Load the saved XML file and format it
+    xml_content = minidom.parse(filename)
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(xml_content.toprettyxml(indent="    "))
 
 
 def load_tree_from_xml(filename):
@@ -38,7 +39,7 @@ def load_tree_from_xml(filename):
     root = tree.getroot()
     nodes = []  # To store nodes in order
 
-    max_entries = int(root.find("MaxEntries").text)
+    max_entries = int(root.attrib.get("max_entries"))
     Node.set_max_entries(max_entries)
 
     for node_elem in root.findall("Node"):
@@ -266,8 +267,8 @@ Node.set_max_entries(4)
 
 tree = [root_node, internal_node1, internal_node2, leaf_node1, leaf_node2, leaf_node3, leaf_node4, leaf_node5]
 
-save_tree_to_xml(tree, "indexfile2.xml")
-rtree = load_tree_from_xml("indexfile2.xml")
+save_tree_to_xml(tree, "indexfile.xml")
+rtree = load_tree_from_xml("indexfile.xml")
 
 # print("tree len = ", len(tree))
 # for i, node in enumerate(tree):
