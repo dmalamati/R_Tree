@@ -37,7 +37,7 @@ def read_all_blocks_from_datafile(filename):
     for block_elem in root.findall(".//Block[@id='" + str(0) + "']"):
         block0 = block_elem
         break
-    num_of_records = int(block0.find(".//num_of_records").text)
+
     num_of_blocks = int(block0.find(".//num_of_blocks").text)
 
     blocks = []
@@ -49,20 +49,20 @@ def read_all_blocks_from_datafile(filename):
 
 
 def read_block_from_datafile(block_id, filename):
-    # Parse the datafile.xml
+    # parse the datafile.xml
     tree = ET.parse(filename)
     root = tree.getroot()
 
-    # Find the specified block with the given block_id
+    # find the block with the given block_id
     block_to_read = None
     for block_elem in root.findall(".//Block[@id='" + str(block_id) + "']"):
         block_to_read = block_elem
         break
 
     if block_to_read is None:
-        return []  # Block with the specified block_id not found
+        return []  # if there is no block with the specified block_id returns empty list
 
-    # Extract and return the records within the block
+    # extract and return the records within the block as [block_id, slot_in_block, lat, lon] (no name or record_id)
     records = []
     for record_elem in block_to_read.findall(".//Record"):
         block_id = int(block_to_read.get("id"))
@@ -108,19 +108,19 @@ def save_blocks_to_xml(blocks, num_of_records, filename):
         for j, record in enumerate(block):
             record_elem = ET.SubElement(block_elem, "Record", id=str(j))
 
-            # Create sub-elements for each field under the "Record" element
+            # create sub-elements for each field for each record element
             ET.SubElement(record_elem, "record_id").text = str(record[0])
             ET.SubElement(record_elem, "name").text = str(record[1])
             coordinates_elem = ET.SubElement(record_elem, "coordinates")
             coordinates_elem.text = " ".join(map(str, record[2:]))
 
-    # Create the ElementTree and save to the specified filename with 'utf-8' encoding
+    # create the ElementTree
     tree = ET.ElementTree(root_elem)
 
-    # Save to the specified filename with 'utf-8' encoding and pretty formatting
+    # save it the datafile with 'utf-8' encoding
     tree.write(filename, encoding="utf-8", xml_declaration=True)
 
-    # Load the saved XML file and format it
+    # load the saved XML file and format it so that it's easier to read
     xml_content = minidom.parse(filename)
     with open(filename, "w", encoding="utf-8") as f:
         f.write(xml_content.toprettyxml(indent="    "))
@@ -129,26 +129,26 @@ def save_blocks_to_xml(blocks, num_of_records, filename):
 input_file = "map.osm"
 block_size = 32 * 1024  # 32KB
 
-# Parse the .osm XML file
+# parse the .osm XML file
 tree = ET.parse(input_file)
 root = tree.getroot()
 
-# List to store the points only (node data)
+# list to store the points only (node data)
 node_data = []
 
-# Access only the "node" elements
+# access only the "node" elements in the .osm
 for element in root:
     if element.tag == "node":
         node_id = element.attrib["id"]
         latitude = element.attrib["lat"]
         longitude = element.attrib["lon"]
         tags = {tag.attrib["k"]: tag.attrib["v"] for tag in element.findall("tag")}
-        name = tags.get("name", "unknown")  # Get the "name" tag value or use "unknown" if it doesn't exist
+        name = tags.get("name", "unknown")  # get the "name" tag value or use "unknown" if it doesn't exist
 
-        # Add node data to the list
+        # add node data to the list
         node_data.append([node_id, name, latitude, longitude])
 
-# Split data into blocks
+# split data into blocks
 blocks = split_data_into_blocks(node_data, block_size)
 save_blocks_to_xml(blocks, len(node_data), "datafile.xml")
 blocks = read_all_blocks_from_datafile("datafile.xml")
