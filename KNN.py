@@ -6,6 +6,7 @@ from Entry import LeafEntry, Rectangle, Entry
 from Node import Node
 
 
+
 def k_nearest_neighbors(tree_root, query_point, k):
     """ Find the k nearest neighbors of query_point in the R-tree rooted at tree_root."""
 
