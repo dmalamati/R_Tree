@@ -1,33 +1,87 @@
-import csv
-import math
 import heapq
-
-
-
-from Entry import Entry, LeafEntry, Rectangle
+import math
+import xml.etree.ElementTree as ET
+import xml.dom.minidom as minidom
+from Entry import LeafEntry, Rectangle, Entry
 from Node import Node
-import pandas as pd
-
-input_file = "datafile.csv"
-overflow_treatment_level = 1
 
 
-# Function to read data from a specific block
-def read_block_data(csv_reader, block_id):
-    block_data = []
+def k_nearest_neighbors(tree_root, query_point, k):
+    """ Find the k nearest neighbors of query_point in the R-tree rooted at tree_root."""
 
-    slot = 0  # Initialize slot for each block
-    for row in csv_reader:
-        row_block_id = int(row[0])
-        if row_block_id == block_id:
-            lat = float(row[2])  # Convert lat to float
-            lon = float(row[3])  # Convert lon to float
-            block_data.append([block_id, slot, lat, lon])  # Include block_id, slot, lat, lon
-            slot += 1  # Increment slot for each record in the block
-        elif row_block_id > block_id:
-            break  # Stop reading when the next block is reached
+    # A priority queue. Elements are (distance, node/point, is_leaf).
+    # The distances are negative because Python's heapq doesn't have a max heap, only a min heap.
+    # So we negate distances to get the max distance first when we pop from the queue.
+    pq = []
 
-    return block_data
+    # Initialize the queue with the root of the tree
+    heapq.heappush(pq, (-tree_root.entries[0].rectangle.euclidean_distance(query_point), tree_root, False))
+
+    k_results = []
+
+    while pq and len(k_results) < k:
+        distance, current, is_leaf = heapq.heappop(pq)
+        distance = -distance  # Convert back to positive
+
+        if is_leaf:  # If it's a leaf entry
+            k_results.append((distance, current))
+            continue
+
+        for entry in current.entries:
+            if isinstance(entry, LeafEntry):  # Leaf Node
+                point_distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(query_point, entry.point)]))
+                heapq.heappush(pq, (-point_distance, entry, True))
+            else:  # Internal Node
+                rectangle_distance = entry.rectangle.euclidean_distance(query_point)
+                heapq.heappush(pq, (-rectangle_distance, entry.child_node, False))
+
+    return k_results
+
+
+def read_all_blocks_from_datafile(filename):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    # read data from block0
+    block0 = None
+    for block_elem in root.findall(".//Block[@id='" + str(0) + "']"):
+        block0 = block_elem
+        break
+
+    blocks = []
+    num_of_blocks = int(block0.find(".//num_of_blocks").text)
+    for block_id in range(1, num_of_blocks):
+        block_data = read_block_from_datafile(block_id, filename)
+        blocks.append(block_data)
+
+    Node.set_max_entries(len(blocks[0]))
+
+    return blocks
+
+
+def read_block_from_datafile(block_id, filename):
+    # Parse the datafile.xml
+    tree = ET.parse(filename)
+    root = tree.getroot()
+
+    # Find the specified block with the given block_id
+    block_to_read = None
+    for block_elem in root.findall(".//Block[@id='" + str(block_id) + "']"):
+        block_to_read = block_elem
+        break
+
+    if block_to_read is None:
+        return []  # Block with the specified block_id not found
+
+    # Extract and return the records within the block
+    records = []
+    for record_elem in block_to_read.findall(".//Record"):
+        block_id = int(block_to_read.get("id"))
+        slot_in_block = int(record_elem.get("id"))
+        coordinates = record_elem.find(".//coordinates").text.split()
+        lat, lon = map(float, coordinates)
+        records.append([block_id, slot_in_block, lat, lon])
+
+    return records
 
 
 def choose_subtree(new_leaf_entry, tree):
@@ -169,7 +223,7 @@ def choose_split_index(entries, split_axis, min_entries):
 
 
 def overflow_treatment(node, level_of_node, tree):
-    global overflow_treatment_level
+    # global overflow_treatment_level
     if level_of_node == 0:
         # split root
         entry_group1, entry_group2 = split(node, Node.min_entries)
@@ -223,10 +277,11 @@ def overflow_treatment(node, level_of_node, tree):
             tree.insert(1, new_node1)
             tree.insert(2, new_node2)
 
-    elif level_of_node == overflow_treatment_level:
+    elif level_of_node == Node.overflow_treatment_level:
         # reinsert
         # print("reinsert")
-        overflow_treatment_level += 1
+        Node.increase_overflow_treatment_level()
+        # overflow_treatment_level += 1
         reinsert(tree, node)
     else:
         # split node
@@ -350,8 +405,9 @@ def insert_entry_to_tree(tree, leaf_entry):
 
 
 def insert_one_by_one(max_entries, blocks):
-    global overflow_treatment_level
-    overflow_treatment_level = 1
+    # global overflow_treatment_level
+    # overflow_treatment_level = 1
+    Node.set_overflow_treatment_level(1)
     tree = []
     root = Node()
     Node.set_max_entries(max_entries)
@@ -365,131 +421,112 @@ def insert_one_by_one(max_entries, blocks):
     return tree  # return full tree
 
 
-def is_dominated(point, skyline_points):
-    for skyline_point in skyline_points:
-        if all(a <= b for a, b in zip(skyline_point, point)):
-            return True
-    return False
-
-
-# This is a placeholder for your mindist function.
-def mindist(query_point, rectangle):
-    sum_of_squares = 0
-    for q, bl, tr in zip(query_point, rectangle.bottom_left_point, rectangle.top_right_point):
-        if q < bl:
-            sum_of_squares += (bl - q) ** 2
-        elif q > tr:
-            sum_of_squares += (q - tr) ** 2
-    return math.sqrt(sum_of_squares)
-
-
-def dominates(a, b):
-    """
-    Returns True if point 'a' dominates point 'b' based on Skyline Query criteria.
-    Both 'a' and 'b' should be tuples or lists representing points in n-dimensional space.
-    """
-    is_strictly_less_in_at_least_one_dimension = False  # To keep track if any dimension of 'a' is strictly less than 'b'
-    is_less_or_equal_in_all_dimensions = True  # To keep track if 'a' is less or equal to 'b' in all dimensions
-
-    for ai, bi in zip(a, b):
-        if ai > bi:
-            is_less_or_equal_in_all_dimensions = False
-            break
-        if ai < bi:
-            is_strictly_less_in_at_least_one_dimension = True
-
-    return is_strictly_less_in_at_least_one_dimension and is_less_or_equal_in_all_dimensions
-
-
-class QueueEntry:
-    def __init__(self, mindist, node_or_entry):
-        self.mindist = mindist
-        self.node_or_entry = node_or_entry
-
-    def __lt__(self, other):
-        return self.mindist < other.mindist
-
-
-def skyline_algorithm(tree, query_point):
-    pq = [QueueEntry(0, 0)]  # Initialize the priority queue with the index of the root node
-    S = []  # The skyline set
-
-    while pq:
-        queue_entry = heapq.heappop(pq)
-        node_index = queue_entry.node_or_entry
-        node = tree[node_index]
-
-        print(f"Priority Queue: {[(entry.mindist, entry.node_or_entry) for entry in pq]}")
-
-        if node.is_leaf():
-            for entry in node.entries:
-                if not is_dominated(entry.point, S):
-                    # Remove points from S that are dominated by the new point
-                    S = [s for s in S if not dominates(entry.point, s)]
-                    S.append(entry.point)
-                print(f"Updated Skyline: {S}")
-
-        else:
-            for entry in node.entries:
-                entry_mindist = mindist(query_point, entry.rectangle)
-                child_index = tree.index(entry.child_node)  # Assuming child_node is an object, find its index in the tree list
-                heapq.heappush(pq, QueueEntry(entry_mindist, child_index))
-
-    return S
-
-
-
-with open(input_file, "r", newline="", encoding="utf-8") as csv_file:
-    csv_reader = csv.reader(csv_file)
-
-    # Skip the header row
-    next(csv_reader)
-
-    # Read and store the metadata from the second row
-    metadata = next(csv_reader)
-
-    # Parse metadata
-    total_entries = int(metadata[1])
-    total_blocks = int(metadata[2])
-    block_size = int(metadata[3])
-
-    # Store all block data in a list called "blocks"
-    blocks = []
-
-    # Read and process each data block
-    for block_id in range(1, total_blocks + 1):
-        csv_file.seek(0)  # Reset the reader position to the beginning
-        next(csv_reader)  # Skip the header row
-        next(csv_reader)  # Skip the metadata row
-
-        block_data = read_block_data(csv_reader, block_id)
-        blocks.append(block_data)
-
-    max_entries = int(total_entries / total_blocks)
-    print("max entries = ", max_entries)
-    for block in blocks:
-        print(block)
-    tree = insert_one_by_one(max_entries, blocks)
-    print("tree len = ", len(tree))
-    for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.record_id, entry.point)
+def save_tree_to_xml(tree, filename):
+    def build_xml(node_elem, node, nodes):
+        for entry in node.entries:
+            if isinstance(entry, Entry):
+                child_node_index = nodes.index(entry.child_node)
+                entry.to_xml(node_elem, child_node_index)
             else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
+                entry.to_xml(node_elem)
+        if node.parent is not None:
+            parent_node_index = nodes.index(node.parent)
+            ET.SubElement(node_elem, "ParentNodeIndex").text = str(parent_node_index)
+            ET.SubElement(node_elem, "SlotInParent").text = str(node.slot_in_parent)
+
+    root_elem = ET.Element("Nodes", max_entries=str(Node.max_entries))
 
     for node in tree:
-        if node.is_leaf():
-            length = len(node.entries[0].point)
-            print(node.entries[0].point)
+        node_elem = ET.SubElement(root_elem, "Node")
+        build_xml(node_elem, node, tree)
 
-    for node in tree:
-        if node.is_leaf():
-            for entry in node.entries:
-                print(entry.point)
+    xml_tree = ET.ElementTree(root_elem)
 
-    query_point = [0] * length
-    result = skyline_algorithm(tree, query_point)
-    print("Result of skyline algorithm:", result)
+    # Save to the specified filename with 'utf-8' encoding and pretty formatting
+    xml_tree.write(filename, encoding="utf-8", xml_declaration=True)
 
+    # Load the saved XML file and format it
+    xml_content = minidom.parse(filename)
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(xml_content.toprettyxml(indent="    "))
+
+
+def load_tree_from_xml(filename):
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    nodes = []  # To store nodes in order
+
+    max_entries = int(root.attrib.get("max_entries"))
+    Node.set_max_entries(max_entries)
+
+    for node_elem in root.findall("Node"):
+        entries = []
+        child_node_indices = []
+
+        if node_elem.find("Entry") is not None:
+            for entry_elem in node_elem.findall("Entry"):
+                rectangle_elem = entry_elem.find("Rectangle")
+                bottom_left_point = [float(coord) for coord in rectangle_elem.find("BottomLeftPoint").text.split()]
+                top_right_point = [float(coord) for coord in rectangle_elem.find("TopRightPoint").text.split()]
+                rectangle = Rectangle([bottom_left_point, top_right_point])
+
+                child_node_index_elem = entry_elem.find("ChildNodeIndex")
+                if child_node_index_elem is not None:
+                    child_node_index = int(child_node_index_elem.text)
+                    child_node_indices.append(child_node_index)
+                entries.append(Entry(rectangle, None))
+
+        elif node_elem.find("LeafEntry") is not None:
+            for entry_elem in node_elem.findall("LeafEntry"):
+                record_id_elem = entry_elem.find("RecordID")
+                point_elem = entry_elem.find("Point")
+                record_id = tuple(map(int, record_id_elem.text.split(",")))
+                point = [float(coord) for coord in point_elem.text.split()]
+                # leaf_entry = LeafEntry([record_id[0], record_id[1]] + point)
+                record = [record_id[0], record_id[1]] + [float(coord) for coord in point]
+                leaf_entry = LeafEntry(record)
+                entries.append(leaf_entry)
+
+        parent_node_index_elem = node_elem.find("ParentNodeIndex")
+        if parent_node_index_elem is not None:
+            parent_node = nodes[int(parent_node_index_elem.text)]
+            slot_in_parent = int(node_elem.find("SlotInParent").text)
+            node = Node(entries, parent_node, slot_in_parent)  # creates node and sets parent
+            parent_node.entries[slot_in_parent].set_child_node(node)  # sets the parent's corresponding entry's child
+        else:
+            node = Node(entries)  # only for root node
+        nodes.append(node)
+
+        Node.set_overflow_treatment_level(nodes[-1].find_node_level())
+
+    return nodes
+
+blocks_for_file = read_all_blocks_from_datafile("datafile.xml")
+print(Node.max_entries)
+tree = insert_one_by_one(Node.max_entries, blocks_for_file)
+print("tree len = ", len(tree))
+for i, node in enumerate(tree):
+    print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))
+    for j, entry in enumerate(node.entries):
+        if isinstance(entry, LeafEntry):
+            print("       leaf_entry", j, ":", entry.record_id, entry.point)
+        else:
+            print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
+
+print("\n")
+
+for node in tree:
+    if node.is_leaf():
+        length = len(node.entries[0].point)
+        print(node.entries[0].point)
+
+query_point = [0] * length
+k_nearest_neighbors = k_nearest_neighbors(tree[0],query_point, 10)
+print(k_nearest_neighbors)
+print("\n")
+
+for distance, leaf_entry in k_nearest_neighbors:
+    print(f"Distance: {distance}")
+    print(f"RecordID: {leaf_entry.record_id}")
+    print(f"Point: {leaf_entry.point}")
+    print("---------------------")
