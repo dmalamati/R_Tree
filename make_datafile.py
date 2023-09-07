@@ -68,8 +68,8 @@ def read_block_from_datafile(block_id, filename):
         block_id = int(block_to_read.get("id"))
         slot_in_block = int(record_elem.get("id"))
         coordinates = record_elem.find(".//coordinates").text.split()
-        lat, lon = map(float, coordinates)
-        records.append([block_id, slot_in_block, lat, lon])
+        coordinates_float = list(map(float, coordinates))
+        records.append([block_id, slot_in_block, *coordinates_float])
 
     return records
 

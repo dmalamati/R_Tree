@@ -2,6 +2,7 @@ from Entry import Entry, LeafEntry, Rectangle
 from Node import Node
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
+import time
 
 
 # Function to read data from a specific block
@@ -62,8 +63,8 @@ def read_block_from_datafile(block_id, filename):
         block_id = int(block_to_read.get("id"))
         slot_in_block = int(record_elem.get("id"))
         coordinates = record_elem.find(".//coordinates").text.split()
-        lat, lon = map(float, coordinates)
-        records.append([block_id, slot_in_block, lat, lon])
+        coordinates_float = list(map(float, coordinates))
+        records.append([block_id, slot_in_block, *coordinates_float])
 
     return records
 
@@ -520,9 +521,13 @@ def load_tree_from_xml(filename):
 #             else:
 #                 print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
 
-blocks_for_file = read_all_blocks_from_datafile("datafile.xml")
+blocks_from_file = read_all_blocks_from_datafile("datafile.xml")
 print(Node.max_entries)
-tree = insert_one_by_one(Node.max_entries, blocks_for_file)
+start_time = time.time()
+tree = insert_one_by_one(Node.max_entries, blocks_from_file)
+end_time = time.time()
+
+print("\nBuild tree by inserting the record one by one: ", end_time-start_time, " sec")
 print("tree len = ", len(tree))
 for i, node in enumerate(tree):
     print("node", i, "level=", node.find_node_level(), "num of entries = ", len(node.entries))

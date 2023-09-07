@@ -57,8 +57,8 @@ def read_whole_block_from_datafile(block_id, filename):
         record_id = int(record_elem.find(".//record_id").text)
         name = record_elem.find(".//name").text
         coordinates = record_elem.find(".//coordinates").text.split()
-        lat, lon = map(float, coordinates)
-        records.append([record_id, name, lat, lon])
+        coordinates_float = list(map(float, coordinates))
+        records.append([record_id, name, *coordinates_float])
 
     return records
 

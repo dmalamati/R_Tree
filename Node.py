@@ -26,19 +26,10 @@ class Node:
         else:
             return f"Node with {len(self.entries)} entries"
 
-    def insert_entry(self, entry):
-        self.entries.append(entry)
-
     def is_leaf(self):
         if not self.entries:
             return False
         return isinstance(self.entries[0], LeafEntry)
-
-    def set_entries(self, entries):
-        self.entries = entries
-
-    def delete_entry(self, entry):
-        pass
 
     def set_parent(self, parent, slot_in_parent):
         self.parent = parent

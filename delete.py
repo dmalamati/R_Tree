@@ -1,4 +1,3 @@
-import csv
 from Entry import Entry, LeafEntry, Rectangle
 from Node import Node
 import xml.etree.ElementTree as ET
