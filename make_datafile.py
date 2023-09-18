@@ -38,6 +38,7 @@ def read_all_blocks_from_datafile(filename):
         block0 = block_elem
         break
 
+    # get the number of blocks from block0
     num_of_blocks = int(block0.find(".//num_of_blocks").text)
 
     blocks = []
@@ -80,31 +81,38 @@ def split_data_into_blocks(data, block_size):
     current_block_size = 0
 
     for record in data:
-        record_size = sys.getsizeof(record)
+        record_size = sys.getsizeof(record)  # find size of record
+        # if the record fits in the current block append it
         if current_block_size + record_size <= block_size:
             current_block.append(record)
             current_block_size += record_size
+        # else save the block and create a new one that contains the record
         else:
             blocks.append(current_block)
             current_block = [record]
             current_block_size = record_size
 
+    # if the last block isn't empty save it
     if current_block:
         blocks.append(current_block)
 
+    # return the list with the filled blocks
     return blocks
 
 
 def save_blocks_to_xml(blocks, num_of_records, filename):
     root_elem = ET.Element("Blocks")
 
+    # create block0 which contains the overall number of records and number of blocks in the datafile
     block0_elem = ET.SubElement(root_elem, "Block", id=str(0))
     ET.SubElement(block0_elem, "num_of_records").text = str(num_of_records)
     ET.SubElement(block0_elem, "num_of_blocks").text = str(len(blocks) + 1)  # +1 = block0
 
+    # create Block elements
     for i, block in enumerate(blocks):
         block_elem = ET.SubElement(root_elem, "Block", id=str(i+1))
 
+        # create Record elements in each Block element
         for j, record in enumerate(block):
             record_elem = ET.SubElement(block_elem, "Record", id=str(j))
 
