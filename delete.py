@@ -285,7 +285,7 @@ def overflow_treatment(node, level_of_node, tree):
 
 def reinsert(tree, leaf_node):
     new_rectangle = Rectangle([entry.point for entry in leaf_node.entries])
-    sorted_entries = sorted(leaf_node.entries, key=lambda entry: new_rectangle.euclidean_distance(entry.point))
+    sorted_entries = sorted(leaf_node.entries, key=lambda entry: new_rectangle.euclidean_distance(entry.point), reverse=True)
     p = int(round(0.3 * Node.max_entries))
     for i in range(p):  # Remove the first p entries from N
         leaf_node.entries.remove(sorted_entries[i])
