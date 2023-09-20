@@ -2,7 +2,7 @@ import csv
 
 from hilbertcurve.hilbertcurve import HilbertCurve
 
-from Entry import Rectangle, Entry, LeafEntry, Point
+from Entry import Rectangle, Entry, LeafEntry
 from Node import Node
 
 
