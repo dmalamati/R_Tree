@@ -10,10 +10,7 @@ def read_whole_block_from_datafile(block_id, filename):
     root = tree.getroot()
 
     # Find the specified block with the given block_id
-    block_to_read = None
-    for block_elem in root.findall(".//Block[@id='" + str(block_id) + "']"):
-        block_to_read = block_elem
-        break
+    block_to_read = root.find(".//Block[@id='" + str(block_id) + "']")
 
     if block_to_read is None:
         return []  # Block with the specified block_id not found
@@ -59,7 +56,7 @@ def range_query(search_rectangle, root_node):
     return points
 
 
-def linear_search_range_query(search_rectangle, datafile_name):
+def linear_search_in_datafile_range_query(search_rectangle, datafile_name):
     tree = ET.parse(datafile_name)
     root = tree.getroot()
     result_records = []
@@ -76,6 +73,16 @@ def linear_search_range_query(search_rectangle, datafile_name):
                 record_id = int(record_elem.find(".//record_id").text)
                 name = record_elem.find(".//name").text
                 result_records.append([record_id, name, *point])
+    return result_records
+
+
+def linear_search_in_tree_leafs_range_query(search_rectangle, leaf_entries):
+    result_records = []
+    # for each block in the datafile (except block0)
+    for leaf_entrie in leaf_entries:
+        # if the point of the record overlaps with the search area append it to the result
+        if search_rectangle.overlaps_with_point(leaf_entrie.point):
+            result_records.append(leaf_entrie)
     return result_records
 
 
@@ -134,28 +141,39 @@ tree = load_tree_from_xml("indexfile.xml")
 
 search_rectangle = Rectangle([[41.5163899, 26.5291294], [41.4913027, 26.5308288]])
 print("search rect is: ", search_rectangle.bottom_left_point, " ", search_rectangle.top_right_point)
+
 start_time = time.time()
 records = range_query(search_rectangle, tree[0])
 end_time = time.time()
 print("Range query using index: ", end_time-start_time, " sec")
 
 original_records = get_original_records_from_datafile(records, "datafile.xml")
-# if len(records) > 0:
-#     print("found points in search rect:")
-#     for i, record in enumerate(records):
-#         print("record ", i, ": ", record)
-# else:
-#     print("nothing found")
+if len(records) > 0:
+    print("found points in search rect:")
+    for i, record in enumerate(records):
+        print("record ", i, ": ", record)
+else:
+    print("nothing found")
+
+leaf_entries = []
+for node in tree[::-1]:
+    if isinstance(node.entries[0], LeafEntry):
+        for leaf_entry in node.entries:
+            leaf_entries.append(leaf_entry)
+    else:
+        break
+
 
 start_time = time.time()
-other_records = linear_search_range_query(search_rectangle, "datafile.xml")
+# other_records = linear_search_in_datafile_range_query(search_rectangle, "datafile.xml")
+other_records = linear_search_in_tree_leafs_range_query(search_rectangle, leaf_entries)
 end_time = time.time()
 
 print("\nRange query using linear search: ", end_time-start_time, " sec")
 
-# if len(other_records) > 0:
-#     print("found points in search rect:")
-#     for i, record in enumerate(other_records):
-#         print("record ", i, ": ", record)
-# else:
-#     print("nothing found")
+if len(other_records) > 0:
+    print("found points in search rect:")
+    for i, record in enumerate(other_records):
+        print("record ", i, ": ", record)
+else:
+    print("nothing found")

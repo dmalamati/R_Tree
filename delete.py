@@ -4,17 +4,21 @@ import xml.etree.ElementTree as ET
 
 
 def choose_subtree(new_leaf_entry, tree):
-    N = tree[0]  # Start at the root node
+    N = tree[0]  # start with the root node
 
     if len(N.entries) == 0:
+        # if root is empty it returns the root
         return N
-    while not isinstance(N.entries[0], LeafEntry):  # While N is not a leaf
-        if isinstance(N.entries[0].child_node.entries[0], LeafEntry):  # if the children of N are leafs
+    # while N is not a leaf
+    while not isinstance(N.entries[0], LeafEntry):
+        # if the children of N are leafs
+        if isinstance(N.entries[0].child_node.entries[0], LeafEntry):
             min_overlap_cost = float('inf')
             min_area_cost = float('inf')
             chosen_entry = None
 
-            for i, entry in enumerate(N.entries):  # for every entry in N where N a node whose child is a leaf
+            # for every entry in N where N a node whose child is a leaf
+            for i, entry in enumerate(N.entries):
                 overlap_enlargement = entry.rectangle.calculate_overlap_enlargement(new_leaf_entry, i, N)
                 area_enlargement = entry.rectangle.calculate_area_enlargement(new_leaf_entry)
 
@@ -22,12 +26,14 @@ def choose_subtree(new_leaf_entry, tree):
                     min_overlap_cost = overlap_enlargement
                     min_area_cost = area_enlargement
                     chosen_entry = entry
-        else:   # if the children of N are NOT leafs
+        else:
+            # if the children of N are NOT leafs
             min_area_cost = float('inf')
             min_area = float('inf')
             chosen_entry = None
 
-            for entry in N.entries:  # for every entry in N where N a node whose child is not a leaf
+            # for every entry in N where N a node whose child is not a leaf
+            for entry in N.entries:
                 area_enlargement = entry.rectangle.calculate_area_enlargement(new_leaf_entry)
                 new_area = entry.rectangle.calculate_area() + area_enlargement
 
@@ -51,8 +57,9 @@ def split(node, min_entries):
 def choose_split_axis(entries, min_entries):
     min_sum_margin = float('inf')
     chosen_axis = None
+    # if the node we want to split is a leaf
     if isinstance(entries[0], LeafEntry):
-        # print(" in for leaf")
+
         for axis in range(len(entries[0].point)):
             entries.sort(key=lambda entry: entry.point[axis])
 
@@ -66,11 +73,12 @@ def choose_split_axis(entries, min_entries):
                 min_sum_margin = sum_margin
                 chosen_axis = axis
     else:
-        # print(" in for not leaf")
+        # if the node we want to split is internal
         for axis in range(len(entries[0].rectangle.bottom_left_point)):
             entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[axis])
 
             sum_margin = 0
+            # find every acceptable partition
             for i in range(min_entries, len(entries) - min_entries + 1):
                 rect1_points = []
                 for entry in entries[:i]:
@@ -85,7 +93,7 @@ def choose_split_axis(entries, min_entries):
                 rect2 = Rectangle(rect2_points)
 
                 sum_margin += rect1.calculate_margin() + rect2.calculate_margin()
-
+            # select the best partition based on the sum of the MBRs margins
             if sum_margin < min_sum_margin:
                 min_sum_margin = sum_margin
                 chosen_axis = axis
@@ -94,22 +102,26 @@ def choose_split_axis(entries, min_entries):
 
 
 def choose_split_index(entries, split_axis, min_entries):
+    # if the node we want to split is a leaf
     if isinstance(entries[0], LeafEntry):
         entries.sort(key=lambda entry: entry.point[split_axis])
         min_overlap = float('inf')
         min_area = float('inf')
         chosen_index = None
+        # finds every split that respects the minimum entries a node can have
         for i in range(min_entries, len(entries) - min_entries + 1):
             rect1 = Rectangle([entry.point for entry in entries[:i]])
             rect2 = Rectangle([entry.point for entry in entries[i:]])
             overlap = rect1.calculate_overlap_value(rect2)
             overall_area = rect1.calculate_area() + rect2.calculate_area()
 
+            # selects the best partition based on the overlap of the MBRs
             if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
                 min_overlap = overlap
                 min_area = overall_area
                 chosen_index = i
     else:
+        # if the node we want to split is internal
         entries.sort(key=lambda entry: entry.rectangle.bottom_left_point[split_axis])
 
         min_overlap = float('inf')
@@ -132,6 +144,7 @@ def choose_split_index(entries, split_axis, min_entries):
             overlap = rect1.calculate_overlap_value(rect2)
             overall_area = rect1.calculate_area() + rect2.calculate_area()
 
+            # selects the best partition based on the overlap of the MBRs
             if overlap < min_overlap or (overlap == min_overlap and overall_area < min_area):
                 min_overlap = overlap
                 min_area = overall_area
@@ -141,12 +154,11 @@ def choose_split_index(entries, split_axis, min_entries):
 
 
 def overflow_treatment(node, level_of_node, tree):
-    # global overflow_treatment_level
     if level_of_node == 0:
         # split root
         entry_group1, entry_group2 = split(node, Node.min_entries)
+        # if  root is a leaf node
         if isinstance(entry_group1[0], LeafEntry):
-            # print("split leaf root")
             new_leaf_node1 = Node(entry_group1)
             new_leaf_node2 = Node(entry_group2)
 
@@ -158,12 +170,15 @@ def overflow_treatment(node, level_of_node, tree):
             new_root_node = Node([root_entry1, root_entry2])
             new_leaf_node1.set_parent(new_root_node, 0)
             new_leaf_node2.set_parent(new_root_node, 1)
+
             tree.remove(node)
+            # root always stays at the head of the list
             tree.insert(0, new_root_node)
+            # the roots children follow right after
             tree.insert(1, new_leaf_node1)
             tree.insert(2, new_leaf_node2)
         else:
-            # print("split internal root")
+            # if root is internal node
             new_node1 = Node(entry_group1)
             new_node2 = Node(entry_group2)
 
@@ -185,28 +200,28 @@ def overflow_treatment(node, level_of_node, tree):
             new_node1.set_parent(new_root_node, 0)
             new_node2.set_parent(new_root_node, 1)
 
+            # set the new nodes as parent of the children that were assigned to each of them
             for i, entry in enumerate(new_node1.entries):
                 entry.child_node.set_parent(new_node1, i)
             for i, entry in enumerate(new_node2.entries):
                 entry.child_node.set_parent(new_node2, i)
 
             tree.remove(node)
-            tree.insert(0, new_root_node)  # root always stays at the head of the list
+            # root always stays at the head of the list
+            tree.insert(0, new_root_node)
+            # the roots children follow right after
             tree.insert(1, new_node1)
             tree.insert(2, new_node2)
 
     elif level_of_node == Node.overflow_treatment_level:
         # reinsert
-        # print("reinsert")
         Node.increase_overflow_treatment_level()
-        # overflow_treatment_level += 1
         reinsert(tree, node)
     else:
         # split node
         entry_group1, entry_group2 = split(node, Node.min_entries)
         if isinstance(entry_group1[0], LeafEntry):
             # split leaf node
-            # print("split leaf node")
             new_leaf_node1 = Node(entry_group1)
             new_leaf_node2 = Node(entry_group2)
 
@@ -231,13 +246,13 @@ def overflow_treatment(node, level_of_node, tree):
             tree.insert(index_to_replace + 1, new_leaf_node2)
             tree.remove(node)
 
+            # check if the parent has overflown
             if len(node.parent.entries) > Node.max_entries:
                 overflow_treatment(node.parent, level_of_node-1, tree)
             else:
                 adjust_rectangles(node.parent)
         else:
             # split internal node
-            # print("split internal node")
             new_node1 = Node(entry_group1)
             new_node2 = Node(entry_group2)
 
@@ -277,6 +292,7 @@ def overflow_treatment(node, level_of_node, tree):
             tree.insert(index_to_replace + 1, new_node2)
             tree.remove(node)
 
+            # check if the parent has overflown
             if len(node.parent.entries) > Node.max_entries:
                 overflow_treatment(new_node1.parent, level_of_node - 1, tree)
             else:
@@ -287,45 +303,55 @@ def reinsert(tree, leaf_node):
     new_rectangle = Rectangle([entry.point for entry in leaf_node.entries])
     sorted_entries = sorted(leaf_node.entries, key=lambda entry: new_rectangle.euclidean_distance(entry.point))
     p = int(round(0.3 * Node.max_entries))
-    for i in range(p):  # Remove the first p entries from N
-        leaf_node.entries.remove(sorted_entries[i])
-    adjust_rectangles(leaf_node)  # Adjust the bounding rectangle of N
     for i in range(p):
+        # remove the first p entries from N
+        leaf_node.entries.remove(sorted_entries[i])
+    adjust_rectangles(leaf_node)  # adjust the bounding rectangle of N
+    for i in range(p):
+        # reinsert the p entries that were removed from N
         insert_entry_to_tree(tree, sorted_entries[i])
 
 
 def adjust_rectangles(node):
+    # if the given node is the root, the adjustment of the MBR is complete
     if node.parent is not None:
+        # if the node is a leaf
         if isinstance(node.entries[0], LeafEntry):
             new_points = []
             for leaf_entry in node.entries:
                 new_points.append(leaf_entry.point)
+            # update the MBR of the parent Entry
             node.parent.entries[node.slot_in_parent].set_rectangle(new_points)
         else:
+            # if the node is internal
             new_points = []
             for entry in node.entries:
                 new_points.append(entry.rectangle.bottom_left_point)
                 new_points.append(entry.rectangle.top_right_point)
+            # update the MBR of the parent Entry
             node.parent.entries[node.slot_in_parent].set_rectangle(new_points)
+        # recursive call for the parent node
         adjust_rectangles(node.parent)
 
 
 def insert_entry_to_tree(tree, leaf_entry):
-    N = choose_subtree(leaf_entry, tree)  # N is a leaf_node
+    N = choose_subtree(leaf_entry, tree)  # N is always a leaf_node
 
     leaf_level = N.find_node_level()  # level of N is leaf_level
+    # if N has room for another entry
     if len(N.entries) < Node.max_entries:
         N.entries.append(leaf_entry)
         adjust_rectangles(N)
+    # if N is full
     elif len(N.entries) == Node.max_entries:
         N.entries.append(leaf_entry)
         overflow_treatment(N, leaf_level, tree)
 
 
 def delete_entry_from_tree(tree, leaf_entry):
-    N = find_leaf_node(leaf_entry, tree[0])
+    N = find_leaf_node(leaf_entry, tree[0]) # removes the leaf_entry from the tree if it exists
     if N is not None:
-        # leaf_entry has been removed
+        # if the node from which the leaf_entry was removed doesn't have enough entries
         if len(N.entries) < Node.min_entries:
             condense_tree(tree, N)
         else:
@@ -336,18 +362,27 @@ def delete_entry_from_tree(tree, leaf_entry):
 
 def find_leaf_node(leaf_entry, root_node):
     nodes_to_be_examined = [root_node]
+    # while we have internal nodes to examine
     while not isinstance(nodes_to_be_examined[0].entries[0], LeafEntry):
         old_nodes_index = len(nodes_to_be_examined)
+        # for every old internal node in the nodes_to_be_examined list
         for i in range(old_nodes_index):
             for entry in nodes_to_be_examined[i].entries:
+                # find the children that overlap with the point we want to delete and append them to the list
                 if entry.rectangle.overlaps_with_point(leaf_entry.point):
                     nodes_to_be_examined.append(entry.child_node)
+        # if the list hasn't grown then the point we are looking for doesn't exist
         if len(nodes_to_be_examined) == old_nodes_index:
             return None
         else:
+            # remove the old nodes that we examined from the list
             nodes_to_be_examined = nodes_to_be_examined[old_nodes_index:]
+
+    # now the list contains only leaf nodes that may contain the record(leaf_entry) we are looking for
     for leaf_node in nodes_to_be_examined:
         for entry in leaf_node.entries:
+            """ if we want to delete a record only based on its point the use this if statement:
+            if leaf_entry.point == entry.point:"""
             if leaf_entry.record_id == entry.record_id and leaf_entry.point == entry.point:
                 # if the leaf_entry is found in a leaf_node it removes it
                 leaf_node.entries.remove(entry)
@@ -358,13 +393,18 @@ def find_leaf_node(leaf_entry, root_node):
 def get_leaf_entries_from_node(node):
     leaf_entries = []
     nodes_to_extract_leaf_entries = [node]
+    # while we have node to examine
     while len(nodes_to_extract_leaf_entries) > 0:
+        # if the current node, aka the first node of the nodes_to_extract_leaf_entries list, is a leaf
         if isinstance(nodes_to_extract_leaf_entries[0].entries[0], LeafEntry):
             for entry in nodes_to_extract_leaf_entries[0].entries:
+                # export the node's entries into the result list, leaf_entries
                 leaf_entries.append(entry)
             nodes_to_extract_leaf_entries.pop(0)
         else:
+            # if the current node is internal
             for entry in nodes_to_extract_leaf_entries[0].entries:
+                # insert into the list the children of the current node
                 nodes_to_extract_leaf_entries.append(entry.child_node)
             nodes_to_extract_leaf_entries.pop(0)
     return leaf_entries
@@ -372,10 +412,14 @@ def get_leaf_entries_from_node(node):
 
 def remove_children_from_tree(tree, node):
     children_of_nodes_to_be_removed = [node]
+    # while we have nodes to examine
     while len(children_of_nodes_to_be_removed) > 0:
+        # if the current node, aka the first node of the children_of_nodes_to_be_removed list, is internal
         if isinstance(children_of_nodes_to_be_removed[0].entries[0], Entry):
             for entry in children_of_nodes_to_be_removed[0].entries:
+                # we append the child node in the children_of_nodes_to_be_removed list
                 children_of_nodes_to_be_removed.append(entry.child_node)
+                # and remove the child node from the tree
                 tree.remove(entry.child_node)
         children_of_nodes_to_be_removed.pop(0)
 
@@ -383,35 +427,40 @@ def remove_children_from_tree(tree, node):
 def condense_tree(tree, leaf_node):
     node = leaf_node
     eliminated_nodes = []
+    # while the current node is not the root
     while node.parent is not None:
+        # if the current node doesn't contain enough entries
         if len(node.entries) < Node.min_entries:
+            # we keep the node in the eliminated_nodes list
             eliminated_nodes.append(node)
+            # and remove the corresponding entry from the parent node
             node.parent.entries.remove(node.parent.entries[node.slot_in_parent])
-            # update slot_in_parent for all the children nodes of the entries
+            # update slot_in_parent for all the children nodes of the parent node's entries
             for i, entry in enumerate(node.parent.entries):
                 entry.child_node.set_slot_in_parent(i)
             tree.remove(node)
-            # if node is internal node then remove its children from the tree
+            # if current node is internal then remove its children from the tree
             if isinstance(node.entries[0], Entry):
                 remove_children_from_tree(tree, node)
             node = node.parent
+        # if the current node contains enough entries
         else:
             adjust_rectangles(node)
             break
 
     root = tree[0]
-    # if root has only one Entry then the child must become the root
+    # if root has only one Entry then the child must become the new root
     if len(root.entries) == 1 and isinstance(root.entries[0], Entry) and len(tree) > 1:
         for entry in root.entries:
             entry.child_node.set_parent(None, None)
         tree.remove(root)
 
-    # insert leaf entries of eliminated_nodes in tree
-    # global overflow_treatment_level
-    # overflow_treatment_level = tree[-1].find_node_level()
     Node.set_overflow_treatment_level(tree[-1].find_node_level())
+    # for every node that was eliminated due to entry shortage
     for node in eliminated_nodes:
+        # we get all the LeafEntries that descend from the current node
         leaf_entries_to_insert = get_leaf_entries_from_node(node)
+        # and we reinsert them in the tree
         for leaf_entry in leaf_entries_to_insert:
             insert_entry_to_tree(tree, leaf_entry)
 
