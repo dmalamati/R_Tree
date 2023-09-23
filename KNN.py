@@ -6,35 +6,55 @@ import math
 
 
 def k_nearest_neighbors(tree_root, query_point, k):
-    """ Find the k nearest neighbors of query_point in the R-tree rooted at tree_root."""
+    """Find the k nearest neighbors of query_point in the R-tree rooted at tree_root."""
 
-    # A priority queue. Elements are (distance, node/point, is_leaf).
-    # The distances are negative because Python's heapq doesn't have a max heap, only a min heap.
-    # So we negate distances to get the max distance first when we pop from the queue.
-    pq = []
+    pq = []  # Priority queue: Elements are (distance, count, node/point, is_leaf).
+
+    count = 0  # Counter for unique ordering for same distances.
+
+    visited_entries = set()  # To keep track of visited nodes and leaf entries
 
     # Initialize the queue with the root of the tree
-    heapq.heappush(pq, (-tree_root.entries[0].rectangle.euclidean_distance(query_point), tree_root, False))
-
-    k_results = []
-
-    while pq and len(k_results) < k:
-        distance, current, is_leaf = heapq.heappop(pq)
-        distance = -distance  # Convert back to positive
-
-        if is_leaf:  # If it's a leaf entry
-            k_results.append((distance, current))
-            continue
-
-        for entry in current.entries:
-            if isinstance(entry, LeafEntry):  # Leaf Node
+    for entry in tree_root.entries:
+        if id(entry) not in visited_entries:
+            visited_entries.add(id(entry))
+            if isinstance(entry, LeafEntry):
                 point_distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(query_point, entry.point)]))
-                heapq.heappush(pq, (-point_distance, entry, True))
-            else:  # Internal Node
-                rectangle_distance = entry.rectangle.euclidean_distance(query_point)
-                heapq.heappush(pq, (-rectangle_distance, entry.child_node, False))
+                heapq.heappush(pq, (point_distance, count, entry, True))
+            else:
+                heapq.heappush(pq, (entry.rectangle.euclidean_distance(query_point), count, entry.child_node, False))
+            count += 1
 
-    return k_results
+    results = []
+
+    while pq and len(results) < k:
+        print(f"Current PQ: {pq}")
+        distance, _, current, is_leaf = heapq.heappop(pq)
+        print(f"Popped {('LeafEntry' if is_leaf else 'Node')} with distance {distance} from PQ")
+        print(f"Current PQ: {pq}")
+
+
+        if is_leaf:  # If it's a leaf entry (i.e., a point)
+            results.append((distance, current.point, current.record_id))
+            print(f"Added LeafEntry: Point={current.point}, Distance={distance}")
+        else:  # If it's a node (either internal or leaf node)
+            for entry in current.entries:
+                entry_id = id(entry)
+                if entry_id not in visited_entries:
+                    visited_entries.add(entry_id)
+                    if isinstance(entry, LeafEntry):  # Leaf Node
+                        point_distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(query_point, entry.point)]))
+                        heapq.heappush(pq, (point_distance, count, entry, True))
+                        print(f"Pushed LeafEntry with Point={entry.point} and distance {point_distance} to PQ")
+                    else:  # Internal Node
+                        rectangle_distance = entry.rectangle.euclidean_distance(query_point)
+                        heapq.heappush(pq, (rectangle_distance, count, entry.child_node, False))
+                        print(f"Pushed Node with distance {rectangle_distance} to PQ")
+                count += 1
+
+    return results
+
+
 
 
 def read_whole_block_from_datafile(block_id, filename):
@@ -136,7 +156,7 @@ def load_tree_from_xml(filename):
     return nodes
 
 
-tree = load_tree_from_xml("indexfile2.xml")
+tree = load_tree_from_xml("indexfile1.xml")
 
 # for node in tree:
 #     if node.is_leaf():
@@ -147,14 +167,15 @@ length = len(tree[-1].entries[0].point)
 print(length)
 
 query_point = [0] * length
-k_nearest_neighbors = k_nearest_neighbors(tree[0], query_point, 3)
+#query_point = [6, 6]
+k_nearest_neighbors = k_nearest_neighbors(tree[0], query_point, 8)
 print(k_nearest_neighbors)
 print("\n")
 
-for distance, leaf_entry in k_nearest_neighbors:
+for distance, point, record_id in k_nearest_neighbors:
     print(f"Distance: {distance}")
-    print(f"RecordID: {leaf_entry.record_id}")
-    print(f"Point: {leaf_entry.point}")
+    print(f"RecordID: {record_id}")
+    print(f"Point: {point}")
     print("---------------------")
 
-# records = get_original_records_from_datafile(k_nearest_neighbors, datafile_name)
+#records = get_original_records_from_datafile(k_nearest_neighbors, "indexfile2.xml")
