@@ -91,6 +91,8 @@ def load_tree_from_xml(filename):
 
     return nodes
 
+
+# MAIN
 # indexfile1
 # leaf_entry1 = LeafEntry([1, 0, 0.0, 4.0])
 # leaf_entry2 = LeafEntry([1, 1, 1.0, 2.0])

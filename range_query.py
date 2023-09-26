@@ -1,21 +1,22 @@
 from Entry import Entry, LeafEntry, Rectangle
-from Node import Node
 import xml.etree.ElementTree as ET
+from Node import Node
 import time
 
 
 def read_whole_block_from_datafile(block_id, filename):
-    # Parse the datafile.xml
+    # parse the datafile.xml
     tree = ET.parse(filename)
     root = tree.getroot()
 
-    # Find the specified block with the given block_id
+    # find the specified block with the given block_id
     block_to_read = root.find(".//Block[@id='" + str(block_id) + "']")
 
+    # if block with the specified block_id doesn't exist
     if block_to_read is None:
-        return []  # Block with the specified block_id not found
+        return []
 
-    # Extract and return the records within the block
+    # extract and return the records within the block
     records = []
     for record_elem in block_to_read.findall(".//Record"):
         record_id = int(record_elem.find(".//record_id").text)
@@ -89,7 +90,7 @@ def linear_search_in_tree_leafs_range_query(search_rectangle, leaf_entries):
 def load_tree_from_xml(filename):
     tree = ET.parse(filename)
     root = tree.getroot()
-    nodes = []  # To store nodes in order
+    nodes = []  # to store the tree's nodes in order
 
     max_entries = int(root.attrib.get("max_entries"))
     Node.set_max_entries(max_entries)
@@ -117,7 +118,6 @@ def load_tree_from_xml(filename):
                 point_elem = entry_elem.find("Point")
                 record_id = tuple(map(int, record_id_elem.text.split(",")))
                 point = [float(coord) for coord in point_elem.text.split()]
-                # leaf_entry = LeafEntry([record_id[0], record_id[1]] + point)
                 record = [record_id[0], record_id[1]] + [float(coord) for coord in point]
                 leaf_entry = LeafEntry(record)
                 entries.append(leaf_entry)
@@ -137,24 +137,43 @@ def load_tree_from_xml(filename):
     return nodes
 
 
+# MAIN
 tree = load_tree_from_xml("indexfile.xml")
 
 search_rectangle = Rectangle([[41.5163899, 26.5291294], [41.4913027, 26.5308288]])
 print("search rect is: ", search_rectangle.bottom_left_point, " ", search_rectangle.top_right_point)
 
+
+# range query using index
 start_time = time.time()
-records = range_query(search_rectangle, tree[0])
+records = search_rectangle.find_points_in_rectangle(tree[0])
 end_time = time.time()
 print("Range query using index: ", end_time-start_time, " sec")
 
 original_records = get_original_records_from_datafile(records, "datafile.xml")
-if len(records) > 0:
+if len(original_records) > 0:
     print("found points in search rect:")
-    for i, record in enumerate(records):
+    for i, original_record in enumerate(original_records):
+        print("record ", i, ": ", original_record)
+else:
+    print("nothing found")
+
+
+# range query using linear search in datafile
+start_time = time.time()
+other_records = linear_search_in_datafile_range_query(search_rectangle, "datafile.xml")
+end_time = time.time()
+print("\nRange query using linear search in datafile: ", end_time-start_time, " sec")
+
+if len(other_records) > 0:
+    print("found points in search rect:")
+    for i, record in enumerate(other_records):
         print("record ", i, ": ", record)
 else:
     print("nothing found")
 
+
+# range query using linear search on tree leafs
 leaf_entries = []
 for node in tree[::-1]:
     if isinstance(node.entries[0], LeafEntry):
@@ -163,17 +182,15 @@ for node in tree[::-1]:
     else:
         break
 
-
 start_time = time.time()
-# other_records = linear_search_in_datafile_range_query(search_rectangle, "datafile.xml")
 other_records = linear_search_in_tree_leafs_range_query(search_rectangle, leaf_entries)
 end_time = time.time()
+print("\nRange query using linear search on tree leafs: ", end_time-start_time, " sec")
 
-print("\nRange query using linear search: ", end_time-start_time, " sec")
-
-if len(other_records) > 0:
+original_records = get_original_records_from_datafile(other_records, "datafile.xml")
+if len(original_records) > 0:
     print("found points in search rect:")
-    for i, record in enumerate(other_records):
-        print("record ", i, ": ", record)
+    for i, original_record in enumerate(original_records):
+        print("record ", i, ": ", original_record)
 else:
     print("nothing found")

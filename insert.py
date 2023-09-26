@@ -487,6 +487,7 @@ def load_tree_from_xml(filename):
     return nodes
 
 
+# MAIN
 #  read the data from the datafile
 blocks_from_file = read_all_blocks_from_datafile("datafile.xml")
 start_time = time.time()

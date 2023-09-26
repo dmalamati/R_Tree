@@ -516,6 +516,7 @@ def load_tree_from_xml(filename):
     return nodes
 
 
+# MAIN
 tree = load_tree_from_xml("indexfile.xml")
 print("max entries = ", Node.max_entries)
 

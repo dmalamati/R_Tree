@@ -134,6 +134,7 @@ def save_blocks_to_xml(blocks, num_of_records, filename):
         f.write(xml_content.toprettyxml(indent="    "))
 
 
+# MAIN
 input_file = "map.osm"
 block_size = 32 * 1024  # 32KB
 
