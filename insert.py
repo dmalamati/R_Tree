@@ -487,7 +487,7 @@ def load_tree_from_xml(filename):
     return nodes
 
 
-# MAIN
+# MAIN -> build tree by inserting the records one by one
 #  read the data from the datafile
 blocks_from_file = read_all_blocks_from_datafile("datafile.xml")
 start_time = time.time()
@@ -510,3 +510,36 @@ print("\n")
 #  save the tree to the indexfile
 save_tree_to_xml(tree, "indexfile.xml")
 
+
+# small example for insertion
+# tree = load_tree_from_xml("indexfile2.xml")
+# print("max entries = ", Node.max_entries)
+# print("min entries = ", Node.min_entries)
+#
+# for i, n in enumerate(tree):
+#     print("node ", i, "level ", n.find_node_level())
+#     if isinstance(n.entries[0], LeafEntry):
+#         for j, entry in enumerate(n.entries):
+#             print("     leaf_entry ", j, ": ", entry.point)
+#     else:
+#         for j, entry in enumerate(n.entries):
+#             print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
+#
+# print("\n")
+#
+# insert_entry_to_tree(tree, LeafEntry([1, 20, -3.0, 1.0]))
+# insert_entry_to_tree(tree, LeafEntry([1, 30, -5.0, 2.0]))
+# insert_entry_to_tree(tree, LeafEntry([1, 40, -4.0, -6.0]))
+# insert_entry_to_tree(tree, LeafEntry([1, 50, -7.0, -7.0]))
+# insert_entry_to_tree(tree, LeafEntry([1, 60, -6.0, -2.0]))
+# insert_entry_to_tree(tree, LeafEntry([1, 70, -8.0, -2.0]))
+# insert_entry_to_tree(tree, LeafEntry([1, 80, -9.0, -3.0]))
+#
+# for i, n in enumerate(tree):
+#     print("node ", i, "level ", n.find_node_level())
+#     if isinstance(n.entries[0], LeafEntry):
+#         for j, entry in enumerate(n.entries):
+#             print("     leaf_entry ", j, ": ", entry.point)
+#     else:
+#         for j, entry in enumerate(n.entries):
+#             print("     entry ", j, ": ", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
