@@ -1,3 +1,5 @@
+import time
+
 from Entry import LeafEntry, Rectangle, Entry
 import xml.etree.ElementTree as ET
 from Node import Node
@@ -28,15 +30,9 @@ def k_nearest_neighbors(tree_root, query_point, k):
     results = []
 
     while pq and len(results) < k:
-        print(f"Current PQ: {pq}")
         distance, _, current, is_leaf = heapq.heappop(pq)
-        print(f"Popped {('LeafEntry' if is_leaf else 'Node')} with distance {distance} from PQ")
-        print(f"Current PQ: {pq}")
-
-
         if is_leaf:  # If it's a leaf entry (i.e., a point)
             results.append((distance, current.point, current.record_id))
-            print(f"Added LeafEntry: Point={current.point}, Distance={distance}")
         else:  # If it's a node (either internal or leaf node)
             for entry in current.entries:
                 entry_id = id(entry)
@@ -45,11 +41,9 @@ def k_nearest_neighbors(tree_root, query_point, k):
                     if isinstance(entry, LeafEntry):  # Leaf Node
                         point_distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(query_point, entry.point)]))
                         heapq.heappush(pq, (point_distance, count, entry, True))
-                        print(f"Pushed LeafEntry with Point={entry.point} and distance {point_distance} to PQ")
                     else:  # Internal Node
                         rectangle_distance = entry.rectangle.euclidean_distance(query_point)
                         heapq.heappush(pq, (rectangle_distance, count, entry.child_node, False))
-                        print(f"Pushed Node with distance {rectangle_distance} to PQ")
                 count += 1
 
     return results
@@ -83,27 +77,31 @@ def read_whole_block_from_datafile(block_id, filename):
     return records
 
 
-def get_original_records_from_datafile(points, filename):
-    # sort the points based on the block_id
-    points.sort(key=lambda leaf_entry: leaf_entry.record_id[0])
-    # separate them by block using a dictionary
-    groups = {}
-    for leaf_entry in points:
-        key = leaf_entry.record_id[0]
-        if key not in groups:
-            groups[key] = []
-        groups[key].append(leaf_entry)
-    list_of_block_items = list(groups.values())  # convert the dictionary into a list of lists
 
-    records_of_points = []
-    for sublist in list_of_block_items:
-        block_id = sublist[0].record_id[0]
-        block_records = read_whole_block_from_datafile(block_id, filename)  # read the whole block
-        for leaf_entry in sublist:
-            slot_in_block = leaf_entry.record_id[1]
-            records_of_points.append(block_records[slot_in_block])  # keep only the records we are looking for
-    return records_of_points
-
+def linear_search_in_datafile_KNN(query_point, datafile_name, k):
+    tree = ET.parse(datafile_name)
+    root = tree.getroot()
+    result_records = []
+    # for each block in the datafile (except block0)
+    for block_elem in root.findall("Block"):
+        if int(block_elem.get("id")) == 0:
+            continue
+        # for every record in each block
+        for record_elem in block_elem.findall("Record"):
+            coordinates = record_elem.find(".//coordinates").text.split()
+            point = list(map(float, coordinates))
+            point_distance = math.sqrt(sum([(a - b) ** 2 for a, b in zip(query_point, point)]))
+            result = [point, point_distance]
+            result_records.append(result)
+    sorted_data = sorted(result_records, key=lambda x: x[1])
+    linear_knn_results = []
+    count = 0
+    for list_1 in sorted_data:
+        if count == k:
+            break
+        linear_knn_results.append(list_1)
+        count += 1
+    return linear_knn_results
 
 def load_tree_from_xml(filename):
     tree = ET.parse(filename)
@@ -156,7 +154,7 @@ def load_tree_from_xml(filename):
     return nodes
 
 
-tree = load_tree_from_xml("indexfile1.xml")
+tree = load_tree_from_xml("indexfile.xml")
 
 # for node in tree:
 #     if node.is_leaf():
@@ -168,14 +166,30 @@ print(length)
 
 query_point = [0] * length
 #query_point = [6, 6]
-k_nearest_neighbors = k_nearest_neighbors(tree[0], query_point, 8)
-print(k_nearest_neighbors)
-print("\n")
+k = 1000
+
+start_time = time.time()
+k_nearest_neighbors = k_nearest_neighbors(tree[0], query_point, k)
+end_time = time.time()
+print("\nKNN using knn algorithm in tree: ", end_time-start_time, " sec")
 
 for distance, point, record_id in k_nearest_neighbors:
     print(f"Distance: {distance}")
     print(f"RecordID: {record_id}")
     print(f"Point: {point}")
     print("---------------------")
+
+datafile_name = "datafile.xml"
+start_time = time.time()
+result_records = linear_search_in_datafile_KNN(query_point, datafile_name, k)
+end_time = time.time()
+print("\nKNN using linear search in datafile: ", end_time-start_time, " sec")
+
+for list in result_records:
+    print(f"Distance: {list[1]}")
+    print(f"Point: {list[0]}")
+    print("---------------------")
+
+
 
 #records = get_original_records_from_datafile(k_nearest_neighbors, "indexfile2.xml")
