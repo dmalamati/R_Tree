@@ -1,0 +1,509 @@
+<?xml version="1.0" ?>
+<Blocks>
+    <Block id="0">
+        <num_of_records>100</num_of_records>
+        <num_of_blocks>2</num_of_blocks>
+    </Block>
+    <Block id="1">
+        <Record id="0">
+            <record_id>164574780</record_id>
+            <name>unknown</name>
+            <coordinates>41.5163899 26.5291294</coordinates>
+        </Record>
+        <Record id="1">
+            <record_id>283711169</record_id>
+            <name>unknown</name>
+            <coordinates>41.5031784 26.5323722</coordinates>
+        </Record>
+        <Record id="2">
+            <record_id>299263482</record_id>
+            <name>Ορεστιάδα</name>
+            <coordinates>41.5036382 26.5286010</coordinates>
+        </Record>
+        <Record id="3">
+            <record_id>299266545</record_id>
+            <name>Νέος Πύργος</name>
+            <coordinates>41.4950707 26.5030085</coordinates>
+        </Record>
+        <Record id="4">
+            <record_id>301031648</record_id>
+            <name>unknown</name>
+            <coordinates>41.4963329 26.4929584</coordinates>
+        </Record>
+        <Record id="5">
+            <record_id>301031649</record_id>
+            <name>unknown</name>
+            <coordinates>41.4974901 26.4891819</coordinates>
+        </Record>
+        <Record id="6">
+            <record_id>301031652</record_id>
+            <name>unknown</name>
+            <coordinates>41.4982615 26.4871219</coordinates>
+        </Record>
+        <Record id="7">
+            <record_id>301031655</record_id>
+            <name>unknown</name>
+            <coordinates>41.5022470 26.4775089</coordinates>
+        </Record>
+        <Record id="8">
+            <record_id>301031656</record_id>
+            <name>unknown</name>
+            <coordinates>41.5045611 26.4720157</coordinates>
+        </Record>
+        <Record id="9">
+            <record_id>301031658</record_id>
+            <name>unknown</name>
+            <coordinates>41.5057181 26.4696125</coordinates>
+        </Record>
+        <Record id="10">
+            <record_id>301031659</record_id>
+            <name>unknown</name>
+            <coordinates>41.5090327 26.4662802</coordinates>
+        </Record>
+        <Record id="11">
+            <record_id>301031661</record_id>
+            <name>unknown</name>
+            <coordinates>41.5113046 26.4650096</coordinates>
+        </Record>
+        <Record id="12">
+            <record_id>301031719</record_id>
+            <name>unknown</name>
+            <coordinates>41.4952319 26.5080253</coordinates>
+        </Record>
+        <Record id="13">
+            <record_id>301031720</record_id>
+            <name>unknown</name>
+            <coordinates>41.4968836 26.5106977</coordinates>
+        </Record>
+        <Record id="14">
+            <record_id>301031721</record_id>
+            <name>unknown</name>
+            <coordinates>41.4977595 26.5128091</coordinates>
+        </Record>
+        <Record id="15">
+            <record_id>301031722</record_id>
+            <name>unknown</name>
+            <coordinates>41.4998760 26.5173195</coordinates>
+        </Record>
+        <Record id="16">
+            <record_id>301031725</record_id>
+            <name>unknown</name>
+            <coordinates>41.5033936 26.5253837</coordinates>
+        </Record>
+        <Record id="17">
+            <record_id>301031825</record_id>
+            <name>unknown</name>
+            <coordinates>41.4915755 26.5044597</coordinates>
+        </Record>
+        <Record id="18">
+            <record_id>301032661</record_id>
+            <name>unknown</name>
+            <coordinates>41.5622578 26.4612011</coordinates>
+        </Record>
+        <Record id="19">
+            <record_id>301032662</record_id>
+            <name>unknown</name>
+            <coordinates>41.5616156 26.4601711</coordinates>
+        </Record>
+        <Record id="20">
+            <record_id>301032663</record_id>
+            <name>unknown</name>
+            <coordinates>41.5605880 26.4586262</coordinates>
+        </Record>
+        <Record id="21">
+            <record_id>301032664</record_id>
+            <name>unknown</name>
+            <coordinates>41.5590466 26.4579395</coordinates>
+        </Record>
+        <Record id="22">
+            <record_id>301057823</record_id>
+            <name>unknown</name>
+            <coordinates>41.4888956 26.5337237</coordinates>
+        </Record>
+        <Record id="23">
+            <record_id>301057999</record_id>
+            <name>unknown</name>
+            <coordinates>41.4887450 26.5310695</coordinates>
+        </Record>
+        <Record id="24">
+            <record_id>301058001</record_id>
+            <name>unknown</name>
+            <coordinates>41.4908024 26.5245464</coordinates>
+        </Record>
+        <Record id="25">
+            <record_id>301058003</record_id>
+            <name>unknown</name>
+            <coordinates>41.4918311 26.5238597</coordinates>
+        </Record>
+        <Record id="26">
+            <record_id>301058005</record_id>
+            <name>unknown</name>
+            <coordinates>41.4940170 26.5226581</coordinates>
+        </Record>
+        <Record id="27">
+            <record_id>301058007</record_id>
+            <name>unknown</name>
+            <coordinates>41.4963314 26.5207698</coordinates>
+        </Record>
+        <Record id="28">
+            <record_id>301058009</record_id>
+            <name>unknown</name>
+            <coordinates>41.5014140 26.5204845</coordinates>
+        </Record>
+        <Record id="29">
+            <record_id>301058011</record_id>
+            <name>unknown</name>
+            <coordinates>41.5044310 26.5205982</coordinates>
+        </Record>
+        <Record id="30">
+            <record_id>301058013</record_id>
+            <name>unknown</name>
+            <coordinates>41.5057166 26.5231731</coordinates>
+        </Record>
+        <Record id="31">
+            <record_id>301058015</record_id>
+            <name>unknown</name>
+            <coordinates>41.5097017 26.5228298</coordinates>
+        </Record>
+        <Record id="32">
+            <record_id>301058017</record_id>
+            <name>unknown</name>
+            <coordinates>41.5127867 26.5233448</coordinates>
+        </Record>
+        <Record id="33">
+            <record_id>301058018</record_id>
+            <name>unknown</name>
+            <coordinates>41.5153575 26.5240314</coordinates>
+        </Record>
+        <Record id="34">
+            <record_id>301058019</record_id>
+            <name>unknown</name>
+            <coordinates>41.5195594 26.5234513</coordinates>
+        </Record>
+        <Record id="35">
+            <record_id>301058020</record_id>
+            <name>unknown</name>
+            <coordinates>41.5223078 26.5254188</coordinates>
+        </Record>
+        <Record id="36">
+            <record_id>301058021</record_id>
+            <name>unknown</name>
+            <coordinates>41.5217840 26.5351894</coordinates>
+        </Record>
+        <Record id="37">
+            <record_id>301058022</record_id>
+            <name>unknown</name>
+            <coordinates>41.5189564 26.5353611</coordinates>
+        </Record>
+        <Record id="38">
+            <record_id>301058023</record_id>
+            <name>unknown</name>
+            <coordinates>41.5158717 26.5353611</coordinates>
+        </Record>
+        <Record id="39">
+            <record_id>301058024</record_id>
+            <name>unknown</name>
+            <coordinates>41.5138151 26.5369060</coordinates>
+        </Record>
+        <Record id="40">
+            <record_id>301058025</record_id>
+            <name>unknown</name>
+            <coordinates>41.5120155 26.5360477</coordinates>
+        </Record>
+        <Record id="41">
+            <record_id>301058026</record_id>
+            <name>unknown</name>
+            <coordinates>41.5089304 26.5362194</coordinates>
+        </Record>
+        <Record id="42">
+            <record_id>301058027</record_id>
+            <name>unknown</name>
+            <coordinates>41.5053391 26.5366475</coordinates>
+        </Record>
+        <Record id="43">
+            <record_id>301058028</record_id>
+            <name>unknown</name>
+            <coordinates>41.5031454 26.5379360</coordinates>
+        </Record>
+        <Record id="44">
+            <record_id>301058030</record_id>
+            <name>unknown</name>
+            <coordinates>41.4959456 26.5372493</coordinates>
+        </Record>
+        <Record id="45">
+            <record_id>301058031</record_id>
+            <name>unknown</name>
+            <coordinates>41.4949170 26.5348461</coordinates>
+        </Record>
+        <Record id="46">
+            <record_id>301058032</record_id>
+            <name>unknown</name>
+            <coordinates>41.4928598 26.5351894</coordinates>
+        </Record>
+        <Record id="47">
+            <record_id>301058033</record_id>
+            <name>unknown</name>
+            <coordinates>41.4902881 26.5357044</coordinates>
+        </Record>
+        <Record id="48">
+            <record_id>301058757</record_id>
+            <name>unknown</name>
+            <coordinates>41.5113153 26.4815999</coordinates>
+        </Record>
+        <Record id="49">
+            <record_id>301058758</record_id>
+            <name>unknown</name>
+            <coordinates>41.5296235 26.4905574</coordinates>
+        </Record>
+        <Record id="50">
+            <record_id>301058927</record_id>
+            <name>unknown</name>
+            <coordinates>41.5111193 26.5066940</coordinates>
+        </Record>
+        <Record id="51">
+            <record_id>301058931</record_id>
+            <name>unknown</name>
+            <coordinates>41.5334628 26.4781941</coordinates>
+        </Record>
+        <Record id="52">
+            <record_id>301058932</record_id>
+            <name>unknown</name>
+            <coordinates>41.5339768 26.4776792</coordinates>
+        </Record>
+        <Record id="53">
+            <record_id>301058933</record_id>
+            <name>unknown</name>
+            <coordinates>41.5388698 26.4769278</coordinates>
+        </Record>
+        <Record id="54">
+            <record_id>301058942</record_id>
+            <name>unknown</name>
+            <coordinates>41.5397590 26.4610280</coordinates>
+        </Record>
+        <Record id="55">
+            <record_id>301073181</record_id>
+            <name>unknown</name>
+            <coordinates>41.4618088 26.5659493</coordinates>
+        </Record>
+        <Record id="56">
+            <record_id>301073183</record_id>
+            <name>unknown</name>
+            <coordinates>41.4635367 26.5648868</coordinates>
+        </Record>
+        <Record id="57">
+            <record_id>301073184</record_id>
+            <name>unknown</name>
+            <coordinates>41.4645658 26.5645435</coordinates>
+        </Record>
+        <Record id="58">
+            <record_id>301073185</record_id>
+            <name>unknown</name>
+            <coordinates>41.4655949 26.5636852</coordinates>
+        </Record>
+        <Record id="59">
+            <record_id>301073186</record_id>
+            <name>unknown</name>
+            <coordinates>41.4659808 26.5624836</coordinates>
+        </Record>
+        <Record id="60">
+            <record_id>301073187</record_id>
+            <name>unknown</name>
+            <coordinates>41.4671385 26.5612819</coordinates>
+        </Record>
+        <Record id="61">
+            <record_id>301073188</record_id>
+            <name>unknown</name>
+            <coordinates>41.4682961 26.5605953</coordinates>
+        </Record>
+        <Record id="62">
+            <record_id>301073189</record_id>
+            <name>unknown</name>
+            <coordinates>41.4690679 26.5599086</coordinates>
+        </Record>
+        <Record id="63">
+            <record_id>301073191</record_id>
+            <name>unknown</name>
+            <coordinates>41.4699683 26.5593936</coordinates>
+        </Record>
+        <Record id="64">
+            <record_id>301073192</record_id>
+            <name>unknown</name>
+            <coordinates>41.4707401 26.5585353</coordinates>
+        </Record>
+        <Record id="65">
+            <record_id>301073193</record_id>
+            <name>unknown</name>
+            <coordinates>41.4707401 26.5576770</coordinates>
+        </Record>
+        <Record id="66">
+            <record_id>301073194</record_id>
+            <name>unknown</name>
+            <coordinates>41.4712546 26.5566471</coordinates>
+        </Record>
+        <Record id="67">
+            <record_id>301073196</record_id>
+            <name>unknown</name>
+            <coordinates>41.4717691 26.5559604</coordinates>
+        </Record>
+        <Record id="68">
+            <record_id>301073197</record_id>
+            <name>unknown</name>
+            <coordinates>41.4729722 26.5552002</coordinates>
+        </Record>
+        <Record id="69">
+            <record_id>301073198</record_id>
+            <name>unknown</name>
+            <coordinates>41.4737159 26.5545369</coordinates>
+        </Record>
+        <Record id="70">
+            <record_id>301073199</record_id>
+            <name>unknown</name>
+            <coordinates>41.4745987 26.5532138</coordinates>
+        </Record>
+        <Record id="71">
+            <record_id>301073200</record_id>
+            <name>unknown</name>
+            <coordinates>41.4753704 26.5514972</coordinates>
+        </Record>
+        <Record id="72">
+            <record_id>301073201</record_id>
+            <name>unknown</name>
+            <coordinates>41.4758849 26.5508106</coordinates>
+        </Record>
+        <Record id="73">
+            <record_id>301073202</record_id>
+            <name>unknown</name>
+            <coordinates>41.4763993 26.5496089</coordinates>
+        </Record>
+        <Record id="74">
+            <record_id>301073203</record_id>
+            <name>unknown</name>
+            <coordinates>41.4770424 26.5485790</coordinates>
+        </Record>
+        <Record id="75">
+            <record_id>301073204</record_id>
+            <name>unknown</name>
+            <coordinates>41.4781999 26.5475490</coordinates>
+        </Record>
+        <Record id="76">
+            <record_id>301073205</record_id>
+            <name>unknown</name>
+            <coordinates>41.4789715 26.5466907</coordinates>
+        </Record>
+        <Record id="77">
+            <record_id>301073206</record_id>
+            <name>unknown</name>
+            <coordinates>41.4797432 26.5456607</coordinates>
+        </Record>
+        <Record id="78">
+            <record_id>301073207</record_id>
+            <name>unknown</name>
+            <coordinates>41.4800004 26.5441158</coordinates>
+        </Record>
+        <Record id="79">
+            <record_id>301073208</record_id>
+            <name>unknown</name>
+            <coordinates>41.4800004 26.5430858</coordinates>
+        </Record>
+        <Record id="80">
+            <record_id>301073209</record_id>
+            <name>unknown</name>
+            <coordinates>41.4794860 26.5422275</coordinates>
+        </Record>
+        <Record id="81">
+            <record_id>301073210</record_id>
+            <name>unknown</name>
+            <coordinates>41.4792288 26.5403392</coordinates>
+        </Record>
+        <Record id="82">
+            <record_id>301073212</record_id>
+            <name>unknown</name>
+            <coordinates>41.4794860 26.5389659</coordinates>
+        </Record>
+        <Record id="83">
+            <record_id>301073214</record_id>
+            <name>unknown</name>
+            <coordinates>41.4796146 26.5377643</coordinates>
+        </Record>
+        <Record id="84">
+            <record_id>301073215</record_id>
+            <name>unknown</name>
+            <coordinates>41.4796146 26.5345027</coordinates>
+        </Record>
+        <Record id="85">
+            <record_id>301073216</record_id>
+            <name>unknown</name>
+            <coordinates>41.4794860 26.5327861</coordinates>
+        </Record>
+        <Record id="86">
+            <record_id>301073217</record_id>
+            <name>unknown</name>
+            <coordinates>41.4798718 26.5312412</coordinates>
+        </Record>
+        <Record id="87">
+            <record_id>301073218</record_id>
+            <name>unknown</name>
+            <coordinates>41.4855927 26.5183879</coordinates>
+        </Record>
+        <Record id="88">
+            <record_id>301073219</record_id>
+            <name>unknown</name>
+            <coordinates>41.4863779 26.5164145</coordinates>
+        </Record>
+        <Record id="89">
+            <record_id>301073220</record_id>
+            <name>unknown</name>
+            <coordinates>41.4864109 26.5148632</coordinates>
+        </Record>
+        <Record id="90">
+            <record_id>301073222</record_id>
+            <name>unknown</name>
+            <coordinates>41.4861561 26.5100890</coordinates>
+        </Record>
+        <Record id="91">
+            <record_id>301073223</record_id>
+            <name>unknown</name>
+            <coordinates>41.4862222 26.5087764</coordinates>
+        </Record>
+        <Record id="92">
+            <record_id>301073224</record_id>
+            <name>unknown</name>
+            <coordinates>41.4868162 26.5075519</coordinates>
+        </Record>
+        <Record id="93">
+            <record_id>301073225</record_id>
+            <name>unknown</name>
+            <coordinates>41.4874727 26.5066905</coordinates>
+        </Record>
+        <Record id="94">
+            <record_id>301073226</record_id>
+            <name>unknown</name>
+            <coordinates>41.4879882 26.5059629</coordinates>
+        </Record>
+        <Record id="95">
+            <record_id>301073227</record_id>
+            <name>unknown</name>
+            <coordinates>41.4884843 26.5048053</coordinates>
+        </Record>
+        <Record id="96">
+            <record_id>301073228</record_id>
+            <name>unknown</name>
+            <coordinates>41.4883705 26.5017777</coordinates>
+        </Record>
+        <Record id="97">
+            <record_id>301073229</record_id>
+            <name>unknown</name>
+            <coordinates>41.4880348 26.4965687</coordinates>
+        </Record>
+        <Record id="98">
+            <record_id>301073231</record_id>
+            <name>unknown</name>
+            <coordinates>41.4890329 26.4946544</coordinates>
+        </Record>
+        <Record id="99">
+            <record_id>301073233</record_id>
+            <name>unknown</name>
+            <coordinates>41.4908172 26.4924016</coordinates>
+        </Record>
+    </Block>
+</Blocks>
