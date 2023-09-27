@@ -50,13 +50,6 @@ def get_original_records_from_datafile(points, filename):
     return records_of_points
 
 
-def range_query(search_rectangle, root_node):
-    points = search_rectangle.find_points_in_rectangle(root_node)
-    if len(points) == 0:
-        return []
-    return points
-
-
 def linear_search_in_datafile_range_query(search_rectangle, datafile_name):
     tree = ET.parse(datafile_name)
     root = tree.getroot()
@@ -194,3 +187,14 @@ if len(original_records) > 0:
         print("record ", i, ": ", original_record)
 else:
     print("nothing found")
+
+# small example
+# tree = load_tree_from_xml("indexfile2.xml")
+# search_rectangle = Rectangle([[-4.0, -6.0], [4.0, 0.0]])
+# records = search_rectangle.find_points_in_rectangle(tree[0])
+# if len(records) > 0:
+#     print("found points in search rect:")
+#     for i, record in enumerate(records):
+#         print("record ", i, ": ", record.point)
+# else:
+#     print("nothing found")

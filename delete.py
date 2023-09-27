@@ -516,10 +516,14 @@ def load_tree_from_xml(filename):
     return nodes
 
 
-# MAIN
-tree = load_tree_from_xml("indexfile.xml")
+# MAIN -> small example
+tree = load_tree_from_xml("indexfile2.xml")
 print("max entries = ", Node.max_entries)
+print("min entries = ", Node.min_entries)
 
+print("\n")
+
+print("Tree before deletions: ")
 for i, n in enumerate(tree):
     print("node ", i, "level ", n.find_node_level())
     if isinstance(n.entries[0], LeafEntry):
@@ -531,13 +535,13 @@ for i, n in enumerate(tree):
 
 print("\n")
 
-insert_entry_to_tree(tree, LeafEntry([1, 20, -3.0, 1.0]))
-insert_entry_to_tree(tree, LeafEntry([1, 30, -5.0, 2.0]))
-insert_entry_to_tree(tree, LeafEntry([1, 40, -4.0, -6.0]))
-insert_entry_to_tree(tree, LeafEntry([1, 50, -7.0, -7.0]))
-insert_entry_to_tree(tree, LeafEntry([1, 60, -6.0, -2.0]))
-insert_entry_to_tree(tree, LeafEntry([1, 70, -8.0, -2.0]))  # κανει reinsert οποτε δεν γινει slpit για indexfile2!
+delete_entry_from_tree(tree, LeafEntry([1, 0, -6.0, -5.0]))
+delete_entry_from_tree(tree, LeafEntry([1, 3, -6.0, 7.0]))
+delete_entry_from_tree(tree, LeafEntry([1, 2, -3.0, -4.0]))
+delete_entry_from_tree(tree, LeafEntry([1, 1, -5.0, -3.0]))
+delete_entry_from_tree(tree, LeafEntry([1, 5, -4.0, 5.0]))
 
+print("Tree after deletions: ")
 for i, n in enumerate(tree):
     print("node ", i, "level ", n.find_node_level())
     if isinstance(n.entries[0], LeafEntry):
