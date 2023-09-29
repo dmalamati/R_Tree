@@ -4,7 +4,7 @@ from Entry import Entry, LeafEntry
 
 class Node:
     max_entries = 4  # M
-    min_entries = math.floor(max_entries * 0.4)  # m = 40% of M
+    min_entries = math.floor(max_entries * 0.3)  # m = 30% of M
 
     overflow_treatment_level = 1
 
