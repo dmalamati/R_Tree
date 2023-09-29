@@ -538,8 +538,6 @@ print("\n")
 delete_entry_from_tree(tree, LeafEntry([1, 0, -6.0, -5.0]))
 delete_entry_from_tree(tree, LeafEntry([1, 3, -6.0, 7.0]))
 delete_entry_from_tree(tree, LeafEntry([1, 2, -3.0, -4.0]))
-delete_entry_from_tree(tree, LeafEntry([1, 1, -5.0, -3.0]))
-delete_entry_from_tree(tree, LeafEntry([1, 5, -4.0, 5.0]))
 
 print("Tree after deletions: ")
 for i, n in enumerate(tree):

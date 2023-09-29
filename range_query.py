@@ -133,7 +133,7 @@ def load_tree_from_xml(filename):
 # MAIN
 tree = load_tree_from_xml("indexfile.xml")
 
-search_rectangle = Rectangle([[41.5163899, 26.5291294], [41.4913027, 26.5308288]])
+search_rectangle = Rectangle([[41.6101905, 26.6318299], [41.5902855, 26.537757]])
 print("search rect is: ", search_rectangle.bottom_left_point, " ", search_rectangle.top_right_point)
 
 
