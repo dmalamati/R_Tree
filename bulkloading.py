@@ -470,8 +470,6 @@ leaf_nodes = []
 current_entries = []
 Node.set_max_entries(round(0.7 * max_entries))
 entries_to_be_inserted = []
-print(Node.max_entries)
-print(Node.min_entries)
 for entry in leaf_entries_sorted_by_hilbert:
     if len(current_entries) < Node.max_entries:
         current_entries.append(entry)
@@ -488,17 +486,6 @@ else:
     # If less than minimum, append them to entries_to_be_inserted
     entries_to_be_inserted.extend(current_entries)
 
-print("++++++++++++")
-
-# Print details of entries_to_be_inserted
-print("Entries to be Inserted:")
-for leaf_entry in entries_to_be_inserted:
-    print(f"Record ID: {leaf_entry.record_id}, Point: {leaf_entry.point}")
-print("++++++++++++")
-
-# Now, 'leaf_nodes' is a list containing all your Nodes acting as leaf nodes with entries up to max_entries.
-
-print(f"Created {len(leaf_nodes)} leaf nodes.")
 
 
 # 1. Calculate MBR for each leaf node
@@ -536,8 +523,7 @@ if current_entry_list:
     for ent in current_entry_list:
         ent.child_node.set_parent(new_node, current_entry_list.index(ent))
 
-# Printing the created nodes with their entries
-print(f"Created {len(internal_nodes)} internal nodes.")
+
 
 # If only one internal node is created, set it as root
 if len(internal_nodes) == 1:
@@ -545,44 +531,11 @@ if len(internal_nodes) == 1:
     tree = [root]
     for node in leaf_nodes:
         tree.append(node)
-    for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level())
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.point)
-            else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point, " ", entry.rectangle.top_right_point)
-
     overflow_treatment_level = tree[-1].find_node_level()
     Node.set_max_entries(max_entries)
     for leaf_entry in entries_to_be_inserted:
         insert_entry_to_tree(tree, leaf_entry)
-    print("---------------------------------------")
-    for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level())
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.point)
-            else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                      entry.rectangle.top_right_point)
-
-    print("The single internal node has been set as the root.")
 else:
-    tree1 = []
-    for node in internal_nodes:
-        tree1.append(node)
-    for node in leaf_nodes:
-        tree1.append(node)
-    for i, node in enumerate(tree1):
-        print("node", i, "level=", node.find_node_level())
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.point)
-            else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                      entry.rectangle.top_right_point)
-    print("---------------------------")
     # If the last internal node has entries less than the minimum required
     # Check if the last internal node has fewer entries than the minimum
     if len(internal_nodes[-1].entries) < Node.min_entries:
@@ -648,64 +601,11 @@ else:
 
     tree = [root] + [node for node in upper_level_nodes if node != root] + leaf_nodes
 
-    for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level())
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.point)
-            else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                      entry.rectangle.top_right_point)
-
-    print("Entries to be Inserted:")
-    for leaf_entry in entries_to_be_inserted:
-        print(f"Record ID: {leaf_entry.record_id}, Point: {leaf_entry.point}")
-    print("++++++++++++")
-
     # Insert the leaf entries from the node that was not included in the tree
     overflow_treatment_level = tree[-1].find_node_level()
     Node.set_max_entries(max_entries)
     for leaf_entry in entries_to_be_inserted:
         insert_entry_to_tree(tree, leaf_entry)
-    print("---------------")
-    for i, node in enumerate(tree):
-        print("node", i, "level=", node.find_node_level())
-        for j, entry in enumerate(node.entries):
-            if isinstance(entry, LeafEntry):
-                print("       leaf_entry", j, ":", entry.point)
-            else:
-                print("       entry", j, ":", entry.rectangle.bottom_left_point, " ",
-                      entry.rectangle.top_right_point)
 
-    print("Done")
-
-
-print(Node.max_entries)
-print(Node.min_entries)
 
 save_tree_to_xml(tree, "indexfile_bulk.xml")
-
-'''
-    # You already have the leaf nodes
-    current_level_nodes = leaf_nodes
-
-    # Create higher level nodes until the root is reached
-    all_levels = [current_level_nodes]  # List to store nodes at all levels
-
-    while len(current_level_nodes) > 1:
-        current_level_nodes = bulk_load_higher_level_nodes(current_level_nodes, max_entries)
-        all_levels.append(current_level_nodes)
-
-    # The root node
-    root = all_levels[-1][0]
-
-    # Print nodes at each level
-    for level, nodes in enumerate(all_levels, start=1):
-        print(f"Level {level} Nodes:")
-        for node in nodes:
-            print(node.mbr)
-
-    print(max_entries)
-    print_tree(root)
-
-'''

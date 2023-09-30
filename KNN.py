@@ -8,8 +8,6 @@ import math
 
 
 def k_nearest_neighbors(tree_root, query_point, k):
-    """Find the k nearest neighbors of query_point in the R-tree rooted at tree_root."""
-
     pq = []  # Priority queue: Elements are (distance, count, node/point, is_leaf).
 
     count = 0  # Counter for unique ordering for same distances.
@@ -47,34 +45,6 @@ def k_nearest_neighbors(tree_root, query_point, k):
                 count += 1
 
     return results
-
-
-
-
-def read_whole_block_from_datafile(block_id, filename):
-    # Parse the datafile.xml
-    tree = ET.parse(filename)
-    root = tree.getroot()
-
-    # Find the specified block with the given block_id
-    block_to_read = None
-    for block_elem in root.findall(".//Block[@id='" + str(block_id) + "']"):
-        block_to_read = block_elem
-        break
-
-    if block_to_read is None:
-        return []  # Block with the specified block_id not found
-
-    # Extract and return the records within the block
-    records = []
-    for record_elem in block_to_read.findall(".//Record"):
-        record_id = int(record_elem.find(".//record_id").text)
-        name = record_elem.find(".//name").text
-        coordinates = record_elem.find(".//coordinates").text.split()
-        coordinates_float = list(map(float, coordinates))
-        records.append([record_id, name, *coordinates_float])
-
-    return records
 
 
 
@@ -155,11 +125,6 @@ def load_tree_from_xml(filename):
 
 
 tree = load_tree_from_xml("indexfile.xml")
-
-# for node in tree:
-#     if node.is_leaf():
-#         length = len(node.entries[0].point)
-#         break
 
 length = len(tree[-1].entries[0].point)
 print(length)
