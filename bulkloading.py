@@ -453,7 +453,7 @@ def gather_leaf_entries_from_node(node):
             leaf_entries.extend(gather_leaf_entries_from_node(entry.child_node))
         return leaf_entries
 
-
+start_time = time.time()
 blocks_from_file = read_all_blocks_from_datafile("datafile.xml")
 max_entries = Node.max_entries
 leaf_entries = []
@@ -607,5 +607,6 @@ else:
     for leaf_entry in entries_to_be_inserted:
         insert_entry_to_tree(tree, leaf_entry)
 
-
+end_time = time.time()
+print(end_time-start_time, " sec")
 save_tree_to_xml(tree, "indexfile_bulk.xml")

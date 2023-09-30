@@ -131,7 +131,7 @@ print(length)
 
 query_point = [0] * length
 #query_point = [6, 6]
-k = 1000
+k = 5
 
 start_time = time.time()
 k_nearest_neighbors = k_nearest_neighbors(tree[0], query_point, k)
