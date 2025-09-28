@@ -50,7 +50,7 @@ To run and test the code, you will need:
 
 ## 🚀 Usage Examples
 
-Below are sample commands / usage examples. Adjust arguments/paths as necessary.
+Below are sample commands / usage examples.
 
 ### Bulk load and index building
 ```bash
